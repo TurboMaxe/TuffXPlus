@@ -1,4 +1,4 @@
-package tf.tuff;
+package tf.tuff.y0;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
