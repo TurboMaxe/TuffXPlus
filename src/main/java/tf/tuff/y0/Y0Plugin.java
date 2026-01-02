@@ -39,6 +39,8 @@ import it.unimi.dsi.fastutil.objects.*;
 import it.unimi.dsi.fastutil.shorts.*;
 import it.unimi.dsi.fastutil.bytes.*;
 
+import tf.tuff.TuffX;
+
 public class Y0Plugin extends JavaPlugin implements Listener, PluginMessageListener {
 
     public static final String CH = "eagler:below_y0";
@@ -55,6 +57,8 @@ public class Y0Plugin extends JavaPlugin implements Listener, PluginMessageListe
     private final ThreadLocal<ShortArrayList> tlba = ThreadLocal.withInitial(() -> new ShortArrayList(4096));
     private final ThreadLocal<ByteArrayList> tlla = ThreadLocal.withInitial(() -> new ByteArrayList(4096));
     private final ThreadLocal<ByteArrayOutputStream> tlos = ThreadLocal.withInitial(() -> new ByteArrayOutputStream(8256));
+
+    private TuffX plugin;
     
     private static final int[] EMPTY_LEGACY = {1, 0};
 
@@ -89,7 +93,10 @@ public class Y0Plugin extends JavaPlugin implements Listener, PluginMessageListe
         Map.entry(Material.CANDLE_CAKE, 3)
     );
 
-
+    public Y0Plugin(TuffX plugin){
+        this.plugin = plugin;
+    }
+    
     private void ld(String m) {
         if (d) getLogger().log(Level.INFO, "[TuffX-Debug] " + m);
     }
