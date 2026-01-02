@@ -84,7 +84,14 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
     }
 
     @Override
+    public void onLoad() {
+        y0Plugin.onTuffXLoad();
+    }
+    
+    @Override
     public void onDisable() {
+        y0Plugin.onTuffXDisable();
+        
         if (serverRegistry != null) {
             serverRegistry.disconnect();
             serverRegistry = null;
@@ -99,6 +106,16 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
       
         if (channel.equals("eagler:below_y0") y0Plugin.handlePacket(player,message):
     }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPlayerChangeWorld(PlayerChangedWorldEvent e) {
+        y0Plugin.handlePlayerChangeWorld(e);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPlayerJoin(PlayerJoinEvent e) {
+        y0Plugin.handlePlayerJoin(e);
+    }
   
     private void lfe() {
         getLogger().info("");
@@ -109,6 +126,6 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
         getLogger().info("   ██║   ╚██████╔╝██║      ██║      ██╔╝╚██╗");
         getLogger().info("   ╚═╝    ╚═════╝ ╚═╝      ╚═╝      ╚═╝  ╚═╝");
         getLogger().info("");
-        getLogger().info("Below y0 and TuffX programmed by Potato");
+        getLogger().info("Below y0 and TuffX programmed by Potato (@justatypicalpotato)");
     }
 }
