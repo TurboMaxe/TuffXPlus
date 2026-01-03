@@ -36,7 +36,7 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public final class ViaBlocksPlugin implements Listener, PluginMessageListener, CommandExecutor {
+public final class ViaBlocksPlugin {
 
     public static final String CLIENTBOUND_CHANNEL = "viablocks:data";
     public static final String SERVERBOUND_CHANNEL = "viablocks:handshake";
@@ -65,6 +65,11 @@ public final class ViaBlocksPlugin implements Listener, PluginMessageListener, C
     public ViaBlocksPlugin(TuffX plugin){
          this.plugin = plugin;
     }   
+    
+    @Override
+public void onPluginMessageReceived(String channel, org.bukkit.entity.Player player, byte[] message) {
+
+}
 
     public void onTuffXLoad() {
         

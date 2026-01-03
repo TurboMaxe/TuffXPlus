@@ -72,6 +72,11 @@ public class Y0Plugin implements Listener, PluginMessageListener {
             getLightEmissionMethod = null;
         }
     }
+    
+    @Override
+public void onPluginMessageReceived(String channel, org.bukkit.entity.Player player, byte[] message) {
+
+}
 
     private static final Map<Material, Integer> legacy_light_map = Map.ofEntries(
         Map.entry(Material.TORCH, 14),
