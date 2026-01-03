@@ -25,7 +25,7 @@ import java.util.logging.Level;
 
 import tf.tuff.TuffX;
 
-public class TuffActions implements Listener {
+public class TuffActions {
 
     public static final String CHANNEL = "eagler:tuffactions";
 
@@ -126,16 +126,14 @@ public class TuffActions implements Listener {
         PacketEvents.getAPI().getPlayerManager().sendPacket(player, packet);
     }
 
-    @EventHandler
-    public void onPlayerQuit(PlayerQuitEvent event) {
+    public void handlePlayerQuit(PlayerQuitEvent event) {
         if (swimmingEnabled) {
             swimmingManager.handleSwimQuit(event);
         }
         tuffPlayers.remove(event.getPlayer().getUniqueId());
     }
 
-    @EventHandler
-    public void onPlayerInventoryClick(InventoryClickEvent event) {
+    public void handlePlayerInventoryClick(InventoryClickEvent event) {
         if (creativeEnabled) {
             creativeManager.onPlayerInventoryClick(event);
         }

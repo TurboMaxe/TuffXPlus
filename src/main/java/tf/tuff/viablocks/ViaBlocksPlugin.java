@@ -104,7 +104,7 @@ public final class ViaBlocksPlugin {
 
         this.cpl = new ChunkPacketListener(this);
 
-        plugin.getCommand("viablocks").setExecutor(this);
+        plugin.getCommand("viablocks").setExecutor(plugin);
         plugin.getLogger().info("ViaBlocks has been enabled successfully and is listening for client handshakes.");
     }
 

@@ -50,7 +50,7 @@ import tf.tuff.y0.Y0Plugin;
 import tf.tuff.viablocks.ViaBlocksPlugin;
 import tf.tuff.tuffactions.TuffActions;
 
-public class TuffX extends JavaPlugin implements Listener, PluginMessageListener {
+public class TuffX extends JavaPlugin implements Listener, PluginMessageListener, CommandExecutor {
 
     public ServerRegistry serverRegistry;
 
@@ -141,12 +141,12 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
     }
     
         @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onBlockForm(BlockFormEvent event) {
+    public void onBlockForm(BlockFormEvent e) {
     viaBlocksPlugin.blockListener.handleBlockForm(e);
 }
     
         @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onBlockFade(BlockFadeEvent event) {
+    public void onBlockFade(BlockFadeEvent e) {
     viaBlocksPlugin.blockListener.handleBlockFade(e);
 }
 
@@ -156,13 +156,14 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
     }
     
         @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onBlockGrow(BlockGrowEvent event) {
+    public void onBlockGrow(BlockGrowEvent e) {
 viaBlocksPlugin.blockListener.handleBlockGrow(e);
 }
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent e) {
         y0Plugin.handlePlayerQuit(e);
+        tuffActions.handlePlayerQuit(e);
         viaBlocksPlugin.blockListener.handlePlayerQuit(e);
     }
     
@@ -176,6 +177,11 @@ viaBlocksPlugin.blockListener.handleBlockGrow(e);
     viaBlocksPlugin.blockListener.handleBlockBreak(e);
         y0Plugin.handleBlockBreak(e);
     }
+    
+        @EventHandler
+    public void onPlayerInventoryClick(InventoryClickEvent e) {
+    tuffActions.handlePlayerInventoryClick(e);
+}
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent e) { 
@@ -189,7 +195,7 @@ viaBlocksPlugin.blockListener.handleBlockGrow(e);
     }
     
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onChunkLoad(ChunkLoadEvent event) {
+    public void onChunkLoad(ChunkLoadEvent e) {
             viaBlocksPlugin.blockListener.handleChunkLoad(e);
 }
 
