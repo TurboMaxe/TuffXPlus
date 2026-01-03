@@ -169,6 +169,12 @@ public void onPluginMessageReceived(String channel, org.bukkit.entity.Player pla
         if (!this.sendWelcomeBook) return;
         ItemStack book = new ItemStack(Material.WRITTEN_BOOK); BookMeta meta = (BookMeta) book.getItemMeta(); if (meta == null) return; meta.setTitle("ViaBlocks Information"); meta.setAuthor("ViaBlocks"); TextComponent welcome = new TextComponent("Welcome to ViaBlocks!"); welcome.setColor(ChatColor.DARK_AQUA); welcome.setBold(true); TextComponent body = new TextComponent("\n\nThis feature is in active development!\n\nIf you find any visual bugs or issues, please report them on our "); body.setColor(ChatColor.BLACK); TextComponent link = new TextComponent("bug tracker"); link.setColor(ChatColor.BLUE); link.setUnderlined(true); link.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://github.com/TuffNetwork/ViaIssuesBlocks/issues")); link.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder("Click to open the bug tracker!").color(ChatColor.GRAY).create())); TextComponent disclaimer = new TextComponent("\n\n(Bamboo and kelp are noted.)"); disclaimer.setColor(ChatColor.DARK_GRAY); disclaimer.setItalic(true); meta.spigot().addPage(new ComponentBuilder("").append(welcome).append(body).append(link).append(new TextComponent(".")).append(disclaimer).create()); book.setItemMeta(meta); plugin.getServer().getScheduler().runTask(plugin, () -> player.openBook(book));
     }
+    
+    @Override
+public boolean onCommand(org.bukkit.command.CommandSender sender, org.bukkit.command.Command command, String label, String[] args) {
+    return true;
+}
+    
     public boolean isPlayerEnabled(Player player) {
         if (player == null) return false; return viaBlocksEnabledPlayers.contains(player.getUniqueId());
     }

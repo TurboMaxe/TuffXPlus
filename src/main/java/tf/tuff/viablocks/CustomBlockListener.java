@@ -208,7 +208,7 @@ public class CustomBlockListener implements Listener {
     public void onBlockPhysics(BlockPhysicsEvent event) {
         Block block = event.getBlock();
         if (isModernMaterial(block.getType())) {
-            plugin.plugin.getServer().getScheduler().runTaskLater(plugin, () -> updateBlockStateForNearbyPlayers(block), 1L);
+            plugin.plugin.getServer().getScheduler().runTaskLater(plugin.plugin, () -> updateBlockStateForNearbyPlayers(block), 1L);
         }
     }*/
 
@@ -296,9 +296,9 @@ public class CustomBlockListener implements Listener {
         return this.modernMaterials.contains(material);
     }
     
-    private void runAsync(Runnable task) { if (plugin.isPaper) { plugin.plugin.getServer().getAsyncScheduler().runNow(plugin, scheduledTask -> task.run()); } else { plugin.plugin.getServer().getScheduler().runTaskAsynchronously(plugin, task); } }
-    private void runSync(Runnable task) { plugin.plugin.getServer().getScheduler().runTask(plugin, task); }
-    private void runSyncLater(Runnable task, long delay) { plugin.plugin.getServer().getScheduler().runTaskLater(plugin, task, delay); }
+    private void runAsync(Runnable task) { if (plugin.isPaper) { plugin.plugin.getServer().getAsyncScheduler().runNow(plugin.plugin, scheduledTask -> task.run()); } else { plugin.plugin.getServer().getScheduler().runTaskAsynchronously(plugin.plugin, task); } }
+    private void runSync(Runnable task) { plugin.plugin.getServer().getScheduler().runTask(plugin.plugin, task); }
+    private void runSyncLater(Runnable task, long delay) { plugin.plugin.getServer().getScheduler().runTaskLater(plugin.plugin, task, delay); }
 
     private int getMinHeight(World world) {
         if (!minHeightChecked) {
