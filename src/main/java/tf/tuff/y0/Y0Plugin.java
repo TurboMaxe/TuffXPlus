@@ -127,9 +127,9 @@ public class Y0Plugin {
             .initialCapacity(256)
             .build();
 
-        getServer().getMessenger().registerOutgoingPluginChannel(this, CH);
-        getServer().getMessenger().registerIncomingPluginChannel(this, CH, this);
-        getServer().getPluginManager().registerEvents(this, this);
+        plugin.getServer().getMessenger().registerOutgoingPluginChannel(plugin, CH);
+        plugin.getServer().getMessenger().registerIncomingPluginChannel(plugin, CH, this);
+        plugin.getServer().getPluginManager().registerEvents(this, plugin);
         if (v == null) v = new ViaBlockIds(this);
         lfe();
 
@@ -203,7 +203,7 @@ public class Y0Plugin {
 
     private void hip(Player p, Location l, String a) {
         if (!ew.contains(p.getWorld().getName()) && !a.equalsIgnoreCase("ready")) {
-            p.sendPluginMessage(this, CH, cby0sp(false));
+            p.sendPluginMessage(plugin, CH, cby0sp(false));
             return;
         }
 
@@ -213,10 +213,10 @@ public class Y0Plugin {
                 aib.add(p.getUniqueId());
                 if (ew.contains(p.getWorld().getName())) {
                     aib.add(p.getUniqueId());
-                    p.sendPluginMessage(this, CH, cby0sp(true));
+                    p.sendPluginMessage(plugin, CH, cby0sp(true));
                     resendChunksInView(p);
                 } else {
-                    p.sendPluginMessage(this, CH, cby0sp(false));
+                    p.sendPluginMessage(plugin, CH, cby0sp(false));
                 }
                 break;
             case "use_on_block":
@@ -234,7 +234,7 @@ public class Y0Plugin {
         int playerChunkX = p.getLocation().getChunk().getX();
         int playerChunkZ = p.getLocation().getChunk().getZ();
 
-        getServer().getScheduler().runTaskAsynchronously(this, () -> {
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             for (int x = -viewDistance; x <= viewDistance; x++) {
                 for (int z = -viewDistance; z <= viewDistance; z++) {
                     int currentChunkX = playerChunkX + x;
@@ -266,9 +266,9 @@ public class Y0Plugin {
 
     public void handlePlayerChangeWorld(PlayerChangedWorldEvent e) {
         Player p = e.getPlayer();
-        p.sendPluginMessage(this, CH, cdp());
+        p.sendPluginMessage(plugin, CH, cdp());
         boolean isEnabledWorld = ew.contains(p.getWorld().getName());
-        p.sendPluginMessage(this, CH, cby0sp(isEnabledWorld));
+        p.sendPluginMessage(plugin, CH, cby0sp(isEnabledWorld));
         if (isPlayerReady(p) && isEnabledWorld) {
             resendChunksInView(p);
         }
@@ -276,9 +276,9 @@ public class Y0Plugin {
 
     public void handlePlayerJoin(PlayerJoinEvent e) {
         Player p = e.getPlayer();
-        p.sendPluginMessage(this, CH, cdp());
+        p.sendPluginMessage(plugin, CH, cdp());
         boolean isEnabledWorld = ew.contains(p.getWorld().getName());
-        p.sendPluginMessage(this, CH, cby0sp(isEnabledWorld));
+        p.sendPluginMessage(plugin, CH, cby0sp(isEnabledWorld));
     }
 
     public void processAndSendChunk(final Player p, final Chunk c) {

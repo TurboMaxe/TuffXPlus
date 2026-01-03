@@ -94,13 +94,13 @@ public final class ViaBlocksPlugin {
 
            
 
-        getServer().getMessenger().registerOutgoingPluginChannel(this, CLIENTBOUND_CHANNEL);
-        getServer().getMessenger().registerIncomingPluginChannel(this, SERVERBOUND_CHANNEL, this);
+        plugin.getServer().getMessenger().registerOutgoingPluginChannel(this, CLIENTBOUND_CHANNEL);
+        plugin.getServer().getMessenger().registerIncomingPluginChannel(this, SERVERBOUND_CHANNEL, this);
 
         this.chunkSenderManager = new ChunkSenderManager(this, this.chunkSendIntervalTicks, this.chunksPerTick);
 
         this.blockListener = new CustomBlockListener(this, this.versionAdapter, this.paletteManager, this.chunkSenderManager);
-        getServer().getPluginManager().registerEvents(this.blockListener, this);
+        plugin.getServer().getPluginManager().registerEvents(this.blockListener, this);
         this.cpl = new ChunkPacketListener(this);
 
         getCommand("viablocks").setExecutor(this);
@@ -148,7 +148,7 @@ public final class ViaBlocksPlugin {
     plugin.getServer().getMessenger().unregisterOutgoingPluginChannel(this, CLIENTBOUND_CHANNEL); plugin.getServer().getMessenger().unregisterIncomingPluginChannel(this, SERVERBOUND_CHANNEL); plugin.getLogger().info("ViaBlocks has been disabled.");
     }
     private void setupPlayerData() {
-        playerDataFile = new File(getDataFolder(), "players.yml"); if (!playerDataFile.exists()) { try { playerDataFile.createNewFile(); } catch (IOException e) { plugin.getLogger().severe("Could not create players.yml!"); e.printStackTrace(); } } playerDataConfig = YamlConfiguration.loadConfiguration(playerDataFile);
+        playerDataFile = new File(plugin.getDataFolder(), "players.yml"); if (!playerDataFile.exists()) { try { playerDataFile.createNewFile(); } catch (IOException e) { plugin.getLogger().severe("Could not create players.yml!"); e.printStackTrace(); } } playerDataConfig = YamlConfiguration.loadConfiguration(playerDataFile);
     }
     public boolean hasPlayerJoinedBefore(Player player) {
         return playerDataConfig.getStringList("joined-players").contains(player.getUniqueId().toString());
@@ -161,7 +161,7 @@ public final class ViaBlocksPlugin {
     }
     public void sendWelcomeGui(Player player) {
         if (!this.sendWelcomeBook) return;
-        ItemStack book = new ItemStack(Material.WRITTEN_BOOK); BookMeta meta = (BookMeta) book.getItemMeta(); if (meta == null) return; meta.setTitle("ViaBlocks Information"); meta.setAuthor("ViaBlocks"); TextComponent welcome = new TextComponent("Welcome to ViaBlocks!"); welcome.setColor(ChatColor.DARK_AQUA); welcome.setBold(true); TextComponent body = new TextComponent("\n\nThis feature is in active development!\n\nIf you find any visual bugs or issues, please report them on our "); body.setColor(ChatColor.BLACK); TextComponent link = new TextComponent("bug tracker"); link.setColor(ChatColor.BLUE); link.setUnderlined(true); link.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://github.com/TuffNetwork/ViaIssuesBlocks/issues")); link.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder("Click to open the bug tracker!").color(ChatColor.GRAY).create())); TextComponent disclaimer = new TextComponent("\n\n(Bamboo and kelp are noted.)"); disclaimer.setColor(ChatColor.DARK_GRAY); disclaimer.setItalic(true); meta.spigot().addPage(new ComponentBuilder("").append(welcome).append(body).append(link).append(new TextComponent(".")).append(disclaimer).create()); book.setItemMeta(meta); getServer().getScheduler().runTask(this, () -> player.openBook(book));
+        ItemStack book = new ItemStack(Material.WRITTEN_BOOK); BookMeta meta = (BookMeta) book.getItemMeta(); if (meta == null) return; meta.setTitle("ViaBlocks Information"); meta.setAuthor("ViaBlocks"); TextComponent welcome = new TextComponent("Welcome to ViaBlocks!"); welcome.setColor(ChatColor.DARK_AQUA); welcome.setBold(true); TextComponent body = new TextComponent("\n\nThis feature is in active development!\n\nIf you find any visual bugs or issues, please report them on our "); body.setColor(ChatColor.BLACK); TextComponent link = new TextComponent("bug tracker"); link.setColor(ChatColor.BLUE); link.setUnderlined(true); link.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://github.com/TuffNetwork/ViaIssuesBlocks/issues")); link.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder("Click to open the bug tracker!").color(ChatColor.GRAY).create())); TextComponent disclaimer = new TextComponent("\n\n(Bamboo and kelp are noted.)"); disclaimer.setColor(ChatColor.DARK_GRAY); disclaimer.setItalic(true); meta.spigot().addPage(new ComponentBuilder("").append(welcome).append(body).append(link).append(new TextComponent(".")).append(disclaimer).create()); book.setItemMeta(meta); plugin.getServer().getScheduler().runTask(this, () -> player.openBook(book));
     }
     public boolean isPlayerEnabled(Player player) {
         if (player == null) return false; return viaBlocksEnabledPlayers.contains(player.getUniqueId());
