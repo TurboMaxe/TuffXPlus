@@ -57,30 +57,27 @@ public class TuffActions {
 
     public void onTuffXEnable() {
         saveDefaultConfig();
-        getLogger().info("TuffActions has been enabled");
-        getLogger().info("Enabling features...");
+        plugin.getLogger().info("TuffActions has been enabled");
+        plugin.getLogger().info("Enabling features...");
 
         swimmingEnabled = plugin.getConfig().getBoolean("swimming.enabled", true);
         creativeEnabled = plugin.getConfig().getBoolean("creative-items.enabled", true);
 
-        if (swimmingEnabled) getLogger().info("Swimming enabled.");
-        if (creativeEnabled) getLogger().info("Creative items enabled.");
+        if (swimmingEnabled) plugin.getLogger().info("Swimming enabled.");
+        if (creativeEnabled) plugin.getLogger().info("Creative items enabled.");
 
         PacketEvents.getAPI().init();
 
         this.swimmingManager = new Swimming(this);
         this.creativeManager = new CreativeMenu(this);
 
-        getServer().getPluginManager().registerEvents(this, this);
-        getLogger().info("Finished enabling features.");
+        plugin.getServer().getPluginManager().registerEvents(this, this);
+        plugin.getLogger().info("Finished enabling features.");
         logEnable();
     }
 
     public void onTuffXDisable() {
-        if (packetListener != null) {
-            PacketEvents.getAPI().getEventManager().unregisterListener(packetListener);
-        }
-        PacketEvents.getAPI().terminate();
+        
     }
 
     public void handlePacket(Player player, byte[] message) {
@@ -122,7 +119,7 @@ public class TuffActions {
                 creativeManager.handlePlaceholderTaken(player, item, amount);
             }
         } catch (IOException e) {
-            getLogger().log(Level.WARNING, "Failed to read a plugin message from " + player.getName(), e);
+                plugin.getLogger().log(Level.WARNING, "Failed to read a plugin message from " + player.getName(), e);
         }
     }
 
@@ -154,6 +151,6 @@ public class TuffActions {
     }
 
     public void logEnable(){
-        getLogger().info("Selected features enabled.");
+        plugin.getLogger().info("Selected features enabled.");
     }
 }

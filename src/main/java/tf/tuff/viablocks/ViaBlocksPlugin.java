@@ -72,22 +72,22 @@ public final class ViaBlocksPlugin {
     public void onTuffXEnable() {
         instance = this;
         if (!setupVersionAdapter()) {
-            getLogger().severe("Could not detect server version. This plugin may not work correctly.");
+            plugin.getLogger().severe("Could not detect server version. This plugin may not work correctly.");
             this.versionAdapter = new LegacyAdapter();
         }
 
-        this.paletteManager = new PaletteManager(this.versionAdapter, getLogger());
+        this.paletteManager = new PaletteManager(this.versionAdapter, plugin.getLogger());
 
         try {
             Class.forName("io.papermc.paper.threadedregions.scheduler.AsyncScheduler");
             this.isPaper = true;
-            getLogger().info("Paper detected. Enabling optimized asynchronous scheduling.");
+            plugin.getLogger().info("Paper detected. Enabling optimized asynchronous scheduling.");
         } catch (ClassNotFoundException e) {
             this.isPaper = false;
-            getLogger().info("Running on Spigot/Bukkit. Using standard scheduler.");
+            plugin.getLogger().info("Running on Spigot/Bukkit. Using standard scheduler.");
         }
 
-        saveDefaultConfig();
+        plugin.saveDefaultConfig();
         this.sendWelcomeBook = plugin.getConfig().getBoolean("send-welcome-book", true);
         loadSyncSettings();
         setupPlayerData();
@@ -104,12 +104,12 @@ public final class ViaBlocksPlugin {
         this.cpl = new ChunkPacketListener(this);
 
         getCommand("viablocks").setExecutor(this);
-        getLogger().info("ViaBlocks has been enabled successfully and is listening for client handshakes.");
+        plugin.getLogger().info("ViaBlocks has been enabled successfully and is listening for client handshakes.");
     }
 
     public void handlePacket(Player player, byte[] message) {
             if (!isPlayerEnabled(player)) {
-                getLogger().info("Received ViaBlocks handshake from player: " + player.getName() + ". Enabling custom blocks.");
+                plugin.getLogger().info("Received ViaBlocks handshake from player: " + player.getName() + ". Enabling custom blocks.");
                 setPlayerEnabled(player, true);
 
                 blockListener.onViaBlocksPlayerJoin(player);
@@ -144,11 +144,10 @@ public final class ViaBlocksPlugin {
         try { Pattern pattern = Pattern.compile("1\\.(\\d{1,2})"); Matcher matcher = pattern.matcher(Bukkit.getBukkitVersion()); if (matcher.find()) { int minorVersion = Integer.parseInt(matcher.group(1)); if (minorVersion >= 13) { this.versionAdapter = new ModernAdapter(); } else { this.versionAdapter = new LegacyAdapter(); } return true; } } catch (Exception e) { e.printStackTrace(); } return false;
     }
 
-    public void onTuffXDisable() {
-        PacketEvents.getAPI().terminate(); getServer().getMessenger().unregisterOutgoingPluginChannel(this, CLIENTBOUND_CHANNEL); getServer().getMessenger().unregisterIncomingPluginChannel(this, SERVERBOUND_CHANNEL); getLogger().info("ViaBlocks has been disabled.");
+    public void onTuffXDisable()  plugin.getServer().getMessenger().unregisterOutgoingPluginChannel(this, CLIENTBOUND_CHANNEL); plugin.getServer().getMessenger().unregisterIncomingPluginChannel(this, SERVERBOUND_CHANNEL); plugin.getLogger().info("ViaBlocks has been disabled.");
     }
     private void setupPlayerData() {
-        playerDataFile = new File(getDataFolder(), "players.yml"); if (!playerDataFile.exists()) { try { playerDataFile.createNewFile(); } catch (IOException e) { getLogger().severe("Could not create players.yml!"); e.printStackTrace(); } } playerDataConfig = YamlConfiguration.loadConfiguration(playerDataFile);
+        playerDataFile = new File(getDataFolder(), "players.yml"); if (!playerDataFile.exists()) { try { playerDataFile.createNewFile(); } catch (IOException e) { plugin.getLogger().severe("Could not create players.yml!"); e.printStackTrace(); } } playerDataConfig = YamlConfiguration.loadConfiguration(playerDataFile);
     }
     public boolean hasPlayerJoinedBefore(Player player) {
         return playerDataConfig.getStringList("joined-players").contains(player.getUniqueId().toString());
@@ -157,7 +156,7 @@ public final class ViaBlocksPlugin {
         return !hasPlayerJoinedBefore(player);
     }
     public void markPlayerAsJoined(Player player) {
-        List<String> joinedPlayers = playerDataConfig.getStringList("joined-players"); if (!joinedPlayers.contains(player.getUniqueId().toString())) { joinedPlayers.add(player.getUniqueId().toString()); playerDataConfig.set("joined-players", joinedPlayers); try { playerDataConfig.save(playerDataFile); } catch (IOException e) { getLogger().severe("Could not save to players.yml!"); e.printStackTrace(); } }
+        List<String> joinedPlayers = playerDataConfig.getStringList("joined-players"); if (!joinedPlayers.contains(player.getUniqueId().toString())) { joinedPlayers.add(player.getUniqueId().toString()); playerDataConfig.set("joined-players", joinedPlayers); try { playerDataConfig.save(playerDataFile); } catch (IOException e) { plugin.getLogger().severe("Could not save to players.yml!"); e.printStackTrace(); } }
     }
     public void sendWelcomeGui(Player player) {
         if (!this.sendWelcomeBook) return;

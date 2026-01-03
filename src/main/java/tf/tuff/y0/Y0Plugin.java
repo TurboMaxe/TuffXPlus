@@ -100,7 +100,7 @@ public class Y0Plugin {
     }
     
     private void ld(String m) {
-        if (d) getLogger().log(Level.INFO, "[TuffX-Debug] " + m);
+        if (d) plugin.getLogger().log(Level.INFO, "[TuffX-Debug] " + m);
     }
 
     public record WCK(String w, int x, int z) {}
@@ -158,7 +158,7 @@ public class Y0Plugin {
                 if (!cp.awaitTermination(10, TimeUnit.SECONDS)) {
                     cp.shutdownNow();
                     if (!cp.awaitTermination(5, TimeUnit.SECONDS)) {
-                        getLogger().severe("Failed to shutdown chunk processor pool!");
+                        plugin.getLogger().severe("Failed to shutdown chunk processor pool!");
                     }
                 }
             } catch (InterruptedException e) {
@@ -197,7 +197,7 @@ public class Y0Plugin {
             String a = new String(ab, StandardCharsets.UTF_8);
             hip(p, new Location(p.getWorld(), x, y, z), a);
         } catch (IOException e) {
-            getLogger().warning("Failed to parse plugin message from " + p.getName() + ": " + e.getMessage());
+            plugin.getLogger().warning("Failed to parse plugin message from " + p.getName() + ": " + e.getMessage());
         }
     }
 
@@ -310,7 +310,7 @@ public class Y0Plugin {
                         pp.add(py);
                     }
                 } catch (IOException e) {
-                    getLogger().severe("Payload creation failed for " + c.getX() + "," + c.getZ() + ": " + e.getMessage());
+                    plugin.getLogger().severe("Payload creation failed for " + c.getX() + "," + c.getZ() + ": " + e.getMessage());
                 }
             }
             plugin.cc.put(k, pp);
@@ -484,7 +484,7 @@ public class Y0Plugin {
             }.runTask(this);
 
         } catch (IOException e) {
-            getLogger().severe("Failed to create single block update payload: " + e.getMessage());
+            plugin.getLogger().severe("Failed to create single block update payload: " + e.getMessage());
         }
     }
 
@@ -544,7 +544,7 @@ public class Y0Plugin {
                             }
                         }.runTask(plugin);
                     } catch (IOException e) {
-                        getLogger().severe("Failed to create lighting payload: " + e.getMessage());
+                        plugin.getLogger().severe("Failed to create lighting payload: " + e.getMessage());
                     }
                 }
             }.runTaskAsynchronously(this);
