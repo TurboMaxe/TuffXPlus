@@ -116,6 +116,36 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
     public void onPlayerJoin(PlayerJoinEvent e) {
         y0Plugin.handlePlayerJoin(e);
     }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent e) {
+        y0Plugin.handlePlayerQuit(e);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBlockBreak(BlockBreakEvent e) { 
+        y0Plugin.handleBlockBreak(e);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBlockPlace(BlockPlaceEvent e) { 
+        y0Plugin.handleBlockPlace(e);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBlockPhysics(BlockPhysicsEvent e) {
+        y0Plugin.handleBlockPhysics(e);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBlockExplode(BlockExplodeEvent e) {
+        y0Plugin.handleBlockExplode(e);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBlockFromTo(BlockFromToEvent e) {
+        y0Plugin.handleBlockFromTo(e);
+    }
   
     private void lfe() {
         getLogger().info("");
