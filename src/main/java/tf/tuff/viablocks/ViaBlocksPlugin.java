@@ -106,7 +106,7 @@ public void onPluginMessageReceived(String channel, org.bukkit.entity.Player pla
         this.chunkSenderManager = new ChunkSenderManager(this, this.chunkSendIntervalTicks, this.chunksPerTick);
 
         this.blockListener = new CustomBlockListener(this, this.versionAdapter, this.paletteManager, this.chunkSenderManager);
-        plugin.getServer().getPluginManager().registerEvents(this.blockListener, this);
+        plugin.getServer().getPluginManager().registerEvents(this.blockListener, plugin);
         this.cpl = new ChunkPacketListener(this);
 
         plugin.getCommand("viablocks").setExecutor(this);

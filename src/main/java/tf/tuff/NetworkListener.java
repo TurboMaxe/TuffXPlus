@@ -21,7 +21,7 @@ public class NetworkListener implements PacketListener {
         if (event.getPacketType() == PacketType.Play.Server.CHUNK_DATA) {
             Player player = (Player) event.getPlayer();
 
-            if (player == null || !plugin.isPlayerReady(player)) {
+            if (player == null) {
                 return;
             }
 

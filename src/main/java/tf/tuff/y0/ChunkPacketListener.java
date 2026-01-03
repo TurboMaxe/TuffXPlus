@@ -18,7 +18,7 @@ public class ChunkPacketListener {
         plugin.getServer().getScheduler().runTask(plugin, () -> {
             if (player.isOnline() && world.isChunkLoaded(chunkX, chunkZ)) {
                 Chunk chunk = world.getChunkAt(chunkX, chunkZ);
-                plugin.processAndSendChunk(player, chunk);
+                this.plugin.processAndSendChunk(player, chunk);
             }
         });
     }

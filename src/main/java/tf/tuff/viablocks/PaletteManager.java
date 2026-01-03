@@ -90,7 +90,7 @@ public class PaletteManager {
 
     private void broadcastNewPaletteEntry(String state) {
         ViaBlocksPlugin plugin = ViaBlocksPlugin.instance;
-        if (plugin == null || !plugin.isEnabled()) {
+        if (plugin == null || !plugin.plugin.isEnabled()) {
             return;
         }
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
@@ -98,13 +98,13 @@ public class PaletteManager {
         out.writeUTF(state);
         byte[] data = out.toByteArray();
 
-        Bukkit.getScheduler().runTask(plugin, () -> {
-            if (!plugin.isEnabled()) {
+        Bukkit.getScheduler().runTask(plugin.plugin, () -> {
+            if (!plugin.plugin.isEnabled()) {
                 return;
             }
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (plugin.isPlayerEnabled(player)) {
-                    player.sendPluginMessage(plugin, ViaBlocksPlugin.CLIENTBOUND_CHANNEL, data);
+                    player.sendPluginMessage(plugin.plugin, ViaBlocksPlugin.CLIENTBOUND_CHANNEL, data);
                 }
             }
         });
