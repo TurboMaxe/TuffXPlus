@@ -51,7 +51,7 @@ public class TuffActions {
     }
 
     public void onTuffXEnable() {
-        saveDefaultConfig();
+        plugin.saveDefaultConfig();
         plugin.getLogger().info("TuffActions has been enabled");
         plugin.getLogger().info("Enabling features...");
 

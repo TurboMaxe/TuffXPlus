@@ -47,11 +47,11 @@ import tf.tuff.tuffactions.TuffActions;
 
 public class TuffX extends JavaPlugin implements Listener, PluginMessageListener {
 
-    private ServerRegistry serverRegistry;
+    public ServerRegistry serverRegistry;
 
-    private Y0Plugin y0Plugin;
-    private ViaBlocksPlugin viaBlocksPlugin;
-    private TuffActions tuffActions;
+    public Y0Plugin y0Plugin;
+    public ViaBlocksPlugin viaBlocksPlugin;
+    public TuffActions tuffActions;
     
     @Override
     public void onLoad() {
@@ -71,7 +71,7 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
         PacketEvents.getAPI().init();
 
         y0Plugin = new Y0Plugin(this);
-        viaBlocksPlugin = new viaBlocksPlugin(this);
+        viaBlocksPlugin = new ViaBlocksPlugin(this);
         tuffActions = new TuffActions(this);
 
         saveDefaultConfig();

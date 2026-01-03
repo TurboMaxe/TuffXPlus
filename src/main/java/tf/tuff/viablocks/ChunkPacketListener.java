@@ -10,9 +10,9 @@ import java.util.UUID;
 public class ChunkPacketListener {
 
     private static boolean initialized = false;
-    private final ViaBlocksPlugin plugin;
+    public final ViaBlocksPlugin plugin;
 
-    private ChunkPacketListener(ViaBlocksPlugin plugin) {
+    public ChunkPacketListener(ViaBlocksPlugin plugin) {
         this.plugin = plugin;
     }
 

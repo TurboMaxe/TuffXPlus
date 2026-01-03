@@ -112,7 +112,7 @@ public class Y0Plugin {
     public void onTuffXEnable() {
         PacketEvents.getAPI().init();
 
-        saveDefaultConfig();
+        plugin.saveDefaultConfig();
         d = plugin.getConfig().getBoolean("debug-mode", false);
         ObjectArrayList<String> ewList = new ObjectArrayList<>(plugin.getConfig().getStringList("enabled-worlds"));
         ew = new ObjectOpenHashSet<>(ewList.size());

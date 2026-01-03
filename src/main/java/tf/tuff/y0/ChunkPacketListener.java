@@ -8,7 +8,7 @@ import org.bukkit.entity.Player;
 
 public class ChunkPacketListener {
 
-    private final Y0Plugin plugin;
+    public final Y0Plugin plugin;
 
     public ChunkPacketListener(Y0Plugin plugin) {
         this.plugin = plugin;
