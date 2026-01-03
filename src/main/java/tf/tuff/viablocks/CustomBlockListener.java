@@ -296,7 +296,7 @@ public class CustomBlockListener implements Listener {
         return this.modernMaterials.contains(material);
     }
     
-    private void runAsync(Runnable task) { if (plugin.isPaper) { plugin.plugin.getServer().getAsyncScheduler().runNow(plugin.plugin, scheduledTask -> task.run()); } else { plugin.plugin.getServer().getScheduler().runTaskAsynchronously(plugin.plugin, task); } }
+    private void runAsync(Runnable task) { if (plugin.isPaper) { plugin.getServer().getAsyncScheduler().runNow(plugin.plugin, scheduledTask -> task.run()); } else { plugin.plugin.getServer().getScheduler().runTaskAsynchronously(plugin.plugin, task); } }
     private void runSync(Runnable task) { plugin.plugin.getServer().getScheduler().runTask(plugin.plugin, task); }
     private void runSyncLater(Runnable task, long delay) { plugin.plugin.getServer().getScheduler().runTaskLater(plugin.plugin, task, delay); }
 
