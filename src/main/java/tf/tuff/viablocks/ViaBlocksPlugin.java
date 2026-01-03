@@ -144,7 +144,8 @@ public final class ViaBlocksPlugin {
         try { Pattern pattern = Pattern.compile("1\\.(\\d{1,2})"); Matcher matcher = pattern.matcher(Bukkit.getBukkitVersion()); if (matcher.find()) { int minorVersion = Integer.parseInt(matcher.group(1)); if (minorVersion >= 13) { this.versionAdapter = new ModernAdapter(); } else { this.versionAdapter = new LegacyAdapter(); } return true; } } catch (Exception e) { e.printStackTrace(); } return false;
     }
 
-    public void onTuffXDisable()  plugin.getServer().getMessenger().unregisterOutgoingPluginChannel(this, CLIENTBOUND_CHANNEL); plugin.getServer().getMessenger().unregisterIncomingPluginChannel(this, SERVERBOUND_CHANNEL); plugin.getLogger().info("ViaBlocks has been disabled.");
+    public void onTuffXDisable(){
+    plugin.getServer().getMessenger().unregisterOutgoingPluginChannel(this, CLIENTBOUND_CHANNEL); plugin.getServer().getMessenger().unregisterIncomingPluginChannel(this, SERVERBOUND_CHANNEL); plugin.getLogger().info("ViaBlocks has been disabled.");
     }
     private void setupPlayerData() {
         playerDataFile = new File(getDataFolder(), "players.yml"); if (!playerDataFile.exists()) { try { playerDataFile.createNewFile(); } catch (IOException e) { plugin.getLogger().severe("Could not create players.yml!"); e.printStackTrace(); } } playerDataConfig = YamlConfiguration.loadConfiguration(playerDataFile);
