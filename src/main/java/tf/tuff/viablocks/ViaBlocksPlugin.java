@@ -22,6 +22,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.messaging.PluginMessageListener;
+import tf.tuff.TuffX;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
 
