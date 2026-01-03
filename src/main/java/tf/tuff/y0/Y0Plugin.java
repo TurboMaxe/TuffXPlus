@@ -135,7 +135,7 @@ public void onPluginMessageReceived(String channel, org.bukkit.entity.Player pla
         plugin.getServer().getMessenger().registerOutgoingPluginChannel(plugin, CH);
         plugin.getServer().getMessenger().registerIncomingPluginChannel(plugin, CH, this);
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
-        if (v == null) v = new ViaBlockIds(this);
+        if (v == null) v = new ViaBlockIds(this.plugin);
         lfe();
 
         int ct = plugin.getConfig().getInt("chunk-processor-threads", -1);

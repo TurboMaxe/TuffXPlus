@@ -264,7 +264,7 @@ public class CustomBlockListener implements Listener {
             return;
         }
         byte[] packetData = buildChunkPacket(updateData);
-        player.sendPluginMessage(plugin, ViaBlocksPlugin.CLIENTBOUND_CHANNEL, packetData);
+        player.sendPluginMessage(plugin.plugin, ViaBlocksPlugin.CLIENTBOUND_CHANNEL, packetData);
     }
     
     private byte[] buildChunkPacket(Map<Integer, List<Long>> blockData) {
@@ -289,7 +289,7 @@ public class CustomBlockListener implements Listener {
         for (String state : palette) {
             out.writeUTF(state);
         }
-        player.sendPluginMessage(plugin, ViaBlocksPlugin.CLIENTBOUND_CHANNEL, out.toByteArray());
+        player.sendPluginMessage(plugin.plugin, ViaBlocksPlugin.CLIENTBOUND_CHANNEL, out.toByteArray());
     }
     
     public boolean isModernMaterial(Material material) {

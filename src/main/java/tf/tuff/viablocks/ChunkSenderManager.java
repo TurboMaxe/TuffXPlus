@@ -47,7 +47,7 @@ public class ChunkSenderManager {
         BukkitRunnable task = new BukkitRunnable() {
             @Override
             public void run() {
-                Player currentPlayer = plugin.getServer().getPlayer(playerId);
+                Player currentPlayer = plugin.plugin.getServer().getPlayer(playerId);
                 if (currentPlayer == null || !currentPlayer.isOnline()) {
                     cancelTask(playerId);
                     return;
@@ -78,7 +78,7 @@ public class ChunkSenderManager {
             }
         };
         
-        task.runTaskTimer(plugin, 1L, intervalTicks);
+        task.runTaskTimer(plugin.plugin, 1L, intervalTicks);
         playerTasks.put(playerId, task);
     }
 

@@ -28,7 +28,7 @@ public class CreativeMenu {
 
     public CreativeMenu(TuffActions plugin) {
         this.plugin = plugin;
-        this.tabUtil = new TabUtil(plugin);
+        this.tabUtil = new TabUtil(plugin.plugin);
         
         if (TuffActions.creativeEnabled) {
             initializeMappings();
