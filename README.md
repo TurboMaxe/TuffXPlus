@@ -8,18 +8,17 @@ TuffX allowing players to see and beat a trial chamber.
 > This is not a "crack" for Minecraft, it simply allows for better TuffClient integration on servers.
 
 ## Quick Start
-Install the latest jar from [releases](https://github.com/TuffNetwork/TuffX-Plugin/releases/latest/) into your server's `plugins` folder. Then, restart your server, and join via TuffClient. You should now be able to use extra features such as below Y0
+Install the latest jar from [releases](https://github.com/TuffNetwork/TuffX-Plugin/releases/latest/) into your server's `plugins` folder. Then, restart your server, and join via TuffClient. You should now be able to use extra features such as below Y0 support, swimming, and viablocks.
 
-TuffXActions and Viablocks are distributed seperately 
 
 ## Compiling
 ```sh
 $ git clone https://github.com/TuffNetwork/TuffX-Plugin
 $ cd TuffX-Plugin
-$ mvn clean install
+$ gradlew build
 ```
 
-The built plugin jar will be in the `target` folder.
+The built plugin jar will be in the `/build/libs/` directory.
 
 ## Q/A
 
