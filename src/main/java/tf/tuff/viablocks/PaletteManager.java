@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
@@ -15,8 +17,8 @@ import org.bukkit.entity.Player;
 
 public class PaletteManager {
 
-    private final List<String> palette = new ArrayList<>();
-    private final Map<String, Integer> stateToIdMap = new HashMap<>();
+    private final CopyOnWriteArrayList<String> palette = new CopyOnWriteArrayList<>();
+    private final Map<String, Integer> stateToIdMap = new ConcurrentHashMap<>();
 
     public PaletteManager(VersionAdapter versionAdapter, Logger logger) {
         generate(versionAdapter, logger);
@@ -24,10 +26,12 @@ public class PaletteManager {
 
     private void generate(VersionAdapter versionAdapter, Logger logger) {
         logger.info("Generating ViaBlocks Pre-Defined Palette...");
+        
+        List<String> initialPalette = new ArrayList<>();
 
         for (Material material : versionAdapter.getModernMaterials()) {
             if (material.isBlock()) {
-                addEntry(versionAdapter.getMaterialKey(material));
+                addEntryInternal(initialPalette, versionAdapter.getMaterialKey(material));
             }
         }
 
@@ -40,7 +44,7 @@ public class PaletteManager {
         for (String d : direction) {
             for (String t : thickness) {
                 for (String w : bools) {
-                    addEntry("minecraft:pointed_dripstone[thickness=" + t + ",vertical_direction=" + d + ",waterlogged=" + w + "]");
+                    addEntryInternal(initialPalette, "minecraft:pointed_dripstone[thickness=" + t + ",vertical_direction=" + d + ",waterlogged=" + w + "]");
                 }
             }
         }
@@ -48,44 +52,61 @@ public class PaletteManager {
         for (String f : facings) {
             for (String t : tilts) {
                 for (String w : bools) {
-                    addEntry("minecraft:big_dripleaf[facing=" + f + ",tilt=" + t + ",waterlogged=" + w + "]");
+                    addEntryInternal(initialPalette, "minecraft:big_dripleaf[facing=" + f + ",tilt=" + t + ",waterlogged=" + w + "]");
                 }
             }
         }
 
         for (String f : facings) {
             for (String h : new String[]{"lower", "upper"}) {
-                addEntry("minecraft:small_dripleaf[facing=" + f + ",half=" + h + ",waterlogged=false]");
+                addEntryInternal(initialPalette, "minecraft:small_dripleaf[facing=" + f + ",half=" + h + ",waterlogged=false]");
             }
         }
         
         for (String b : bools) {
-            addEntry("minecraft:cave_vines[age=0,berries=" + b + "]");
-            addEntry("minecraft:cave_vines_plant[berries=" + b + "]");
+            addEntryInternal(initialPalette, "minecraft:cave_vines[age=0,berries=" + b + "]");
+            addEntryInternal(initialPalette, "minecraft:cave_vines_plant[berries=" + b + "]");
         }
 
+        palette.addAll(initialPalette);
         logger.info("Palette initialized with " + palette.size() + " entries.");
+    }
+
+    private void addEntryInternal(List<String> localPalette, String state) {
+        if (!stateToIdMap.containsKey(state)) {
+            stateToIdMap.put(state, localPalette.size());
+            localPalette.add(state);
+        }
     }
 
     private void addEntry(String state) {
         if (!stateToIdMap.containsKey(state)) {
-            stateToIdMap.put(state, palette.size());
-            palette.add(state);
+            synchronized (this) {
+                if (!stateToIdMap.containsKey(state)) {
+                     stateToIdMap.put(state, palette.size());
+                     palette.add(state);
+                }
+            }
         }
     }
 
-    public synchronized int getOrCreateId(String state) {
-        if (stateToIdMap.containsKey(state)) {
-            return stateToIdMap.get(state);
+    public int getOrCreateId(String state) {
+        Integer id = stateToIdMap.get(state);
+        if (id != null) {
+            return id;
         }
 
-        int newId = palette.size();
-        palette.add(state);
-        stateToIdMap.put(state, newId);
-        
-        broadcastNewPaletteEntry(state);
-        
-        return newId;
+        synchronized (this) {
+             id = stateToIdMap.get(state);
+             if (id != null) return id;
+             
+             int newId = palette.size();
+             palette.add(state);
+             stateToIdMap.put(state, newId);
+             
+             broadcastNewPaletteEntry(state);
+             return newId;
+        }
     }
 
     private void broadcastNewPaletteEntry(String state) {

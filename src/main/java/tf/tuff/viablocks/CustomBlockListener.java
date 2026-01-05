@@ -44,6 +44,7 @@ public class CustomBlockListener {
     private final PaletteManager paletteManager;
     private final EnumSet<Material> modernMaterials;
     private final ChunkSenderManager chunkSenderManager;
+    private static final Map<String, Integer> worldMinHeights = new ConcurrentHashMap<>();
     private static volatile Method minHeightMethod;
     private static volatile boolean minHeightChecked;
     private static final long X_MASK = (1L << 26) - 1L;
@@ -72,26 +73,26 @@ public class CustomBlockListener {
         }
         sendPaletteToClient(player);
         runSync(() -> {
-            if (!player.isOnline()) {
-                return;
-            }
+            if (!player.isOnline()) return;
 
             World world = player.getWorld();
-            int viewDistance = this.versionAdapter.getClientViewDistance(player);
+            int viewDistance = Math.min(this.versionAdapter.getClientViewDistance(player), 12); 
             int playerChunkX = player.getLocation().getChunk().getX();
             int playerChunkZ = player.getLocation().getChunk().getZ();
-            List<Chunk> chunks = new ArrayList<>();
+            
+            List<Chunk> chunksToLoad = new ArrayList<>();
             for (int x = -viewDistance; x <= viewDistance; x++) {
                 for (int z = -viewDistance; z <= viewDistance; z++) {
-                    int currentChunkX = playerChunkX + x;
-                    int currentChunkZ = playerChunkZ + z;
-                    if (world.isChunkLoaded(currentChunkX, currentChunkZ)) {
-                        chunks.add(world.getChunkAt(currentChunkX, currentChunkZ));
+                    int cx = playerChunkX + x;
+                    int cz = playerChunkZ + z;
+                    if (world.isChunkLoaded(cx, cz)) {
+                         chunksToLoad.add(world.getChunkAt(cx, cz));
                     }
                 }
             }
-            if (!chunks.isEmpty()) {
-                chunkSenderManager.addChunksToQueue(player, chunks);
+
+            if (!chunksToLoad.isEmpty()) {
+                chunkSenderManager.addChunksToQueue(player, chunksToLoad);
             }
         });
     }
@@ -143,11 +144,11 @@ public class CustomBlockListener {
         int chunkX = chunkSnapshot.getX() << 4;
         int chunkZ = chunkSnapshot.getZ() << 4;
 
-        for (int x = 0; x < 16; x++) {
-            for (int z = 0; z < 16; z++) {
-                for (int y = minHeight; y < maxHeight; y++) {
+        for (int y = minHeight; y < maxHeight; y++) {
+            for (int x = 0; x < 16; x++) {
+                for (int z = 0; z < 16; z++) {
                     Material blockType = chunkSnapshot.getBlockType(x, y, z);
-                    if (!this.modernMaterials.contains(blockType)) {
+                    if (blockType == Material.AIR || !this.modernMaterials.contains(blockType)) {
                         continue;
                     }
                     
@@ -213,8 +214,10 @@ public class CustomBlockListener {
 
     private void updateBlockStateForNearbyPlayers(Block block) {
         Location blockLocation = block.getLocation();
+        double radiusSq = 6400;
+
         for (Player player : block.getWorld().getPlayers()) {
-            if (plugin.isPlayerEnabled(player) && player.getLocation().distanceSquared(blockLocation) < 6400) {
+            if (plugin.isPlayerEnabled(player) && player.getLocation().distanceSquared(blockLocation) < radiusSq) {
                 int stateId;
                 if (isModernMaterial(block.getType())) {
                     BlockData data = block.getBlockData();
@@ -234,8 +237,10 @@ public class CustomBlockListener {
     
     private void sendClearUpdateToNearbyPlayers(Location location) {
         final int AIR_ID = 0;
+        double radiusSq = 6400;
+        
         for (Player player : location.getWorld().getPlayers()) {
-            if (plugin.isPlayerEnabled(player) && player.getLocation().distanceSquared(location) < 6400) {
+            if (plugin.isPlayerEnabled(player) && player.getLocation().distanceSquared(location) < radiusSq) {
                 sendPacket(player, AIR_ID, location);
             }
         }
@@ -306,25 +311,17 @@ public class CustomBlockListener {
     private void runSyncLater(Runnable task, long delay) { plugin.plugin.getServer().getScheduler().runTaskLater(plugin.plugin, task, delay); }
 
     private int getMinHeight(World world) {
-        if (!minHeightChecked) {
+        return worldMinHeights.computeIfAbsent(world.getName(), k -> {
             try {
-                minHeightMethod = world.getClass().getMethod("getMinHeight");
-            } catch (Exception e) {
-                minHeightMethod = null;
-            }
-            minHeightChecked = true;
-        }
-        if (minHeightMethod != null) {
-            try {
-                Object value = minHeightMethod.invoke(world);
+                Method method = world.getClass().getMethod("getMinHeight");
+                Object value = method.invoke(world);
                 if (value instanceof Integer) {
                     return (Integer) value;
                 }
             } catch (Exception e) {
-                return 0;
             }
-        }
-        return 0;
+            return 0;
+        });
     }
     
     private long packLocation(int x, int y, int z) {

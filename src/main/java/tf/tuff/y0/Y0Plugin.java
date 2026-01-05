@@ -61,6 +61,7 @@ public class Y0Plugin {
     
     private static final int[] EMPTY_LEGACY = {1, 0};
 
+    private static final Map<BlockData, Integer> emissionCache = new ConcurrentHashMap<>();
     private static Method getLightEmissionMethod;
 
     public ChunkPacketListener cpl;
@@ -68,6 +69,7 @@ public class Y0Plugin {
     static {
         try {
             getLightEmissionMethod = BlockData.class.getMethod("getLightEmission");
+            getLightEmissionMethod.setAccessible(true);
         } catch (NoSuchMethodException e) {
             getLightEmissionMethod = null;
         }
@@ -140,10 +142,12 @@ public class Y0Plugin {
         cp = Executors.newFixedThreadPool(tc, r -> {
             Thread t = new Thread(r, "TuffX-Chunk-" + System.nanoTime());
             t.setDaemon(true);
-            t.setPriority(Thread.NORM_PRIORITY + 1);
+            t.setPriority(Thread.NORM_PRIORITY - 1);
             return t;
         }); 
-        
+
+        emissionCache.clear();
+
         plugin.getLogger().info("Y0 reloaded.");
     }
 
@@ -182,7 +186,7 @@ public class Y0Plugin {
         cp = Executors.newFixedThreadPool(tc, r -> {
             Thread t = new Thread(r, "TuffX-Chunk-" + System.nanoTime());
             t.setDaemon(true);
-            t.setPriority(Thread.NORM_PRIORITY + 1);
+            t.setPriority(Thread.NORM_PRIORITY - 1);
             return t;
         });
     }
@@ -339,9 +343,10 @@ public class Y0Plugin {
             return;
         }
         
+        final ChunkSnapshot snapshot = c.getChunkSnapshot(false, false, false);
+        
         cp.submit(() -> {
             final ObjectArrayList<byte[]> pp = new ObjectArrayList<>(4);
-            final ChunkSnapshot s = c.getChunkSnapshot(false, false, false);
             final Object2ObjectOpenHashMap<BlockData, int[]> cvt = tlcc.get();
             cvt.clear(); 
             for (int sy = -4; sy < 0; sy++) {
@@ -349,25 +354,27 @@ public class Y0Plugin {
                     return;
                 }
                 try {
-                    byte[] py = csp(s, c.getX(), c.getZ(), sy, cvt);
+                    byte[] py = csp(snapshot, c.getX(), c.getZ(), sy, cvt);
                     if (py != null) {
                         pp.add(py);
                     }
                 } catch (IOException e) {
-                    plugin.getLogger().severe("Payload creation failed for " + c.getX() + "," + c.getZ() + ": " + e.getMessage());
+                    plugin.getLogger().severe("Payload creation failed: " + e.getMessage());
                 }
             }
             this.cc.put(k, pp);
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    if (p.isOnline()) {
-                        for (byte[] py : pp) {
-                            p.sendPluginMessage(plugin, CH, py);
+            if (!pp.isEmpty()) {
+                new BukkitRunnable() {
+                    @Override
+                    public void run() {
+                        if (p.isOnline()) {
+                            for (byte[] py : pp) {
+                                p.sendPluginMessage(plugin, CH, py);
+                            }
                         }
                     }
-                }
-            }.runTask(plugin);
+                }.runTask(plugin);
+            }
         });
     }
 
@@ -571,17 +578,18 @@ public class Y0Plugin {
             }
         }
         for (CSC sc : stu) {
+            if (!w.isChunkLoaded(sc.x, sc.z)) continue;
             ChunkSnapshot s = w.getChunkAt(sc.x, sc.z).getChunkSnapshot(true, false, false);
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    try {
+            
+            if (cp != null && !cp.isShutdown()) {
+                cp.submit(() -> {
+                     try {
                         byte[] py = clp(s, sc);
                         new BukkitRunnable() {
                             @Override
                             public void run() {
                                 for (Player p : w.getPlayers()) {
-                                    if (p.getLocation().distanceSquared(l) < 4096) {
+                                    if (p.isOnline() && p.getLocation().distanceSquared(l) < 4096) {
                                         p.sendPluginMessage(plugin, CH, py);
                                     }
                                 }
@@ -590,8 +598,8 @@ public class Y0Plugin {
                     } catch (IOException e) {
                         plugin.getLogger().severe("Failed to create lighting payload: " + e.getMessage());
                     }
-                }
-            }.runTaskAsynchronously(plugin);
+                });
+            }
         }
     }
 
