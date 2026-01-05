@@ -17,7 +17,7 @@ This is not a "crack" for Minecraft. It only enables extra client integration fe
 PacketEvents, Jackson, and WebSocket libraries are shaded into the jar.
 
 ## Install
-1. Drop `TuffX.jar` into your server's `plugins` folder.
+1. Drop `TuffX-United-0.0.1.jar` into your server's `plugins` folder.
 2. Start the server to generate `plugins/TuffX/config.yml`.
 3. Configure features in `config.yml` (`y0`, `viablocks`, `swimming`, `creative-items`, `registry`).
 4. Restart or run `/tuffx reload`.
@@ -45,7 +45,7 @@ cd Tuff-united
 ./gradlew build
 ```
 
-Output jar: `build/libs/TuffX.jar`.
+Output jar: `build/libs/TuffX-United-0.0.1.jar`.
 
 ## Support
 Join our Discord: https://discord.gg/G76Q3K4bWJ

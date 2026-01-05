@@ -1,5 +1,5 @@
-name: TuffX
-version: 2.0
+name: ${name}
+version: ${version}
 main: tf.tuff.TuffX
 author: Potato
 authors: [Potato, llucasandersen, coleis1op]

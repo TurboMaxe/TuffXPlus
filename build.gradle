@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'tf.tuff'
-version = '2.0'
+version = '0.0.1'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
@@ -55,7 +55,7 @@ processResources {
 
 shadowJar {
     archiveClassifier.set('')
-    archiveFileName.set('TuffX.jar')
+    archiveFileName.set("${project.name}-${project.version}.jar")
     
     relocate 'com.github.retrooper.packetevents', 'tf.tuff.packetevents'
     relocate 'io.github.retrooper.packetevents', 'tf.tuff.packetevents'
