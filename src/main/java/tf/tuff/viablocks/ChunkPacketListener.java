@@ -5,8 +5,11 @@ import tf.tuff.TuffX;
 import org.bukkit.Chunk;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
-import java.util.UUID;
+import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.bukkit.scheduler.BukkitRunnable;
@@ -17,6 +20,7 @@ public class ChunkPacketListener {
     public final ViaBlocksPlugin plugin;
 
     private final Queue<ChunkRequest> pendingRequests = new ConcurrentLinkedQueue<>();
+    private final Map<UUID, Set<Long>> pendingKeys = new ConcurrentHashMap<>();
     private BukkitRunnable processorTask;
 
     public ChunkPacketListener(ViaBlocksPlugin plugin) {
@@ -25,11 +29,25 @@ public class ChunkPacketListener {
 
     private static class ChunkRequest {
         final Player player;
+        final UUID playerId;
         final World world;
         final int x, z;
-        ChunkRequest(Player p, World w, int x, int z) { 
-            this.player = p; this.world = w; this.x = x; this.z = z; 
+        final long key;
+        ChunkRequest(Player p, World w, int x, int z, long key) { 
+            this.player = p;
+            this.playerId = p != null ? p.getUniqueId() : null;
+            this.world = w;
+            this.x = x;
+            this.z = z;
+            this.key = key;
         }
+    }
+
+    public void start() {
+        if (processorTask != null && !processorTask.isCancelled()) {
+            return;
+        }
+        startProcessor();
     }
 
     private void startProcessor() {
@@ -46,6 +64,15 @@ public class ChunkPacketListener {
                     ChunkRequest req = pendingRequests.poll();
                     if (req == null) break;
                     
+                    UUID playerId = req.playerId;
+                    Set<Long> pending = playerId != null ? pendingKeys.get(playerId) : null;
+                    if (pending != null) {
+                        pending.remove(req.key);
+                        if (pending.isEmpty()) {
+                            pendingKeys.remove(playerId, pending);
+                        }
+                    }
+
                     Player p = req.player;
                     if (p == null || !p.isOnline()) continue;
 
@@ -65,6 +92,8 @@ public class ChunkPacketListener {
             processorTask.cancel();
         }
         pendingRequests.clear();
+        pendingKeys.clear();
+        processorTask = null;
     }
 
     public static void initialize(ViaBlocksPlugin plugin) {
@@ -79,6 +108,14 @@ public class ChunkPacketListener {
         if (!plugin.isPlayerEnabled(player)) {
             return;
         }
-        pendingRequests.add(new ChunkRequest(player, world, chunkX, chunkZ));
+        long key = chunkKey(chunkX, chunkZ);
+        Set<Long> pending = pendingKeys.computeIfAbsent(player.getUniqueId(), k -> ConcurrentHashMap.newKeySet());
+        if (pending.add(key)) {
+            pendingRequests.add(new ChunkRequest(player, world, chunkX, chunkZ, key));
+        }
+    }
+
+    private static long chunkKey(int x, int z) {
+        return ((long) x & 0xFFFFFFFFL) | (((long) z & 0xFFFFFFFFL) << 32);
     }
 }

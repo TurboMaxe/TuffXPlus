@@ -3,6 +3,8 @@ name: Gradle Build
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - "builds/**"
 
 permissions:
   contents: write
@@ -10,6 +12,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
 
     steps:
       - name: checkout
@@ -27,7 +30,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: build
-        run: ./gradlew build
+        run: ./gradlew --no-daemon build
 
       - name: copy jar to builds
         run: |
@@ -40,5 +43,9 @@ jobs:
           git config user.email "github-actions@github.com"
 
           git add builds/TuffX.jar
+          if git diff --cached --quiet; then
+            echo "No build artifact changes to commit."
+            exit 0
+          fi
           git commit -m "Update build artifact"
           git push

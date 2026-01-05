@@ -1,8 +1,11 @@
 package tf.tuff.viablocks;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import tf.tuff.viablocks.version.VersionAdapter;
+import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.ChunkSnapshot;
 import org.bukkit.Location;
@@ -36,6 +39,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 public class CustomBlockListener {
 
@@ -55,8 +59,13 @@ public class CustomBlockListener {
     private static final int X_SHIFT = 12 + 26;
     private final Map<UUID, Map<Integer, List<Long>>> pendingUpdates = new HashMap<>();
     private final Set<UUID> pendingFlush = new HashSet<>();
+    private static final double UPDATE_RADIUS_SQUARED = 6400;
+    private static final byte[] EMPTY_PACKET = new byte[0];
     
     private final Map<BlockData, Integer> blockDataIdCache = new ConcurrentHashMap<>();
+    private final Cache<ChunkKey, byte[]> chunkPacketCache;
+
+    private record ChunkKey(String world, int x, int z) {}
 
     public CustomBlockListener(ViaBlocksPlugin plugin, VersionAdapter versionAdapter, PaletteManager paletteManager, ChunkSenderManager chunkSenderManager) {
         this.plugin = plugin;
@@ -64,6 +73,10 @@ public class CustomBlockListener {
         this.paletteManager = paletteManager;
         this.chunkSenderManager = chunkSenderManager; 
         this.modernMaterials = versionAdapter.getModernMaterials();
+        this.chunkPacketCache = CacheBuilder.newBuilder()
+            .maximumSize(2048)
+            .expireAfterAccess(5, TimeUnit.MINUTES)
+            .build();
     }
 
     public void onViaBlocksPlayerJoin(Player player) {
@@ -117,10 +130,23 @@ public class CustomBlockListener {
     }
 
     public void processChunkForSinglePlayer(Chunk chunk, Player player) {
-        if (!chunk.isLoaded()) return;
+        if (!chunk.isLoaded() || modernMaterials.isEmpty() || !isFeatureEnabled()) return;
+
+        World world = chunk.getWorld();
+        ChunkKey cacheKey = new ChunkKey(world.getName(), chunk.getX(), chunk.getZ());
+        byte[] cached = chunkPacketCache.getIfPresent(cacheKey);
+        if (cached != null) {
+            if (cached.length > 0) {
+                runSync(() -> {
+                    if (player.isOnline()) {
+                        player.sendPluginMessage(plugin.plugin, ViaBlocksPlugin.CLIENTBOUND_CHANNEL, cached);
+                    }
+                });
+            }
+            return;
+        }
 
         ChunkSnapshot snapshot = chunk.getChunkSnapshot(false, false, false);
-        World world = chunk.getWorld();
         int minHeight = getMinHeight(world);
         int maxHeight = world.getMaxHeight();
         
@@ -128,15 +154,18 @@ public class CustomBlockListener {
             if (!plugin.plugin.isEnabled()) return;
 
             Map<Integer, List<Long>> foundBlocks = findModernBlocksInChunk(snapshot, minHeight, maxHeight);
-            if (!foundBlocks.isEmpty()) {
-                byte[] packetData = buildChunkPacket(foundBlocks);
-                if (plugin.plugin.isEnabled()) {
-                    runSync(() -> {
-                        if (player.isOnline()) {
-                            player.sendPluginMessage(plugin.plugin, ViaBlocksPlugin.CLIENTBOUND_CHANNEL, packetData);
-                        }
-                    });
-                }
+            if (foundBlocks.isEmpty()) {
+                chunkPacketCache.put(cacheKey, EMPTY_PACKET);
+                return;
+            }
+            byte[] packetData = buildChunkPacket(foundBlocks);
+            chunkPacketCache.put(cacheKey, packetData);
+            if (plugin.plugin.isEnabled()) {
+                runSync(() -> {
+                    if (player.isOnline()) {
+                        player.sendPluginMessage(plugin.plugin, ViaBlocksPlugin.CLIENTBOUND_CHANNEL, packetData);
+                    }
+                });
             }
         });
     }
@@ -171,81 +200,131 @@ public class CustomBlockListener {
     }
 
     public void handleBlockPlace(BlockPlaceEvent event) {
-        Block block = event.getBlock();
-        if (isModernMaterial(block.getType())) {
-            updateBlockStateForNearbyPlayers(block);
-        }
+        handleModernBlockChange(
+            event.getBlockReplacedState().getBlockData(),
+            event.getBlock().getBlockData(),
+            event.getBlock().getLocation()
+        );
     }
 
     public void handleBlockBreak(BlockBreakEvent event) {
-        if (isModernMaterial(event.getBlock().getType())) {
-            sendClearUpdateToNearbyPlayers(event.getBlock().getLocation());
-        }
+        handleModernBlockChange(
+            event.getBlock().getBlockData(),
+            Material.AIR.createBlockData(),
+            event.getBlock().getLocation()
+        );
     }
 
     public void handleBlockExplode(BlockExplodeEvent event) {
         for (Block block : event.blockList()) {
-            if (isModernMaterial(block.getType())) {
-                sendClearUpdateToNearbyPlayers(block.getLocation());
-            }
+            handleModernBlockChange(
+                block.getBlockData(),
+                Material.AIR.createBlockData(),
+                block.getLocation()
+            );
         }
     }
 
     public void handleBlockFromTo(BlockFromToEvent event) {
         Block destroyedBlock = event.getToBlock();
-        if (isModernMaterial(destroyedBlock.getType())) {
-            sendClearUpdateToNearbyPlayers(destroyedBlock.getLocation());
-        }
+        handleModernBlockChange(
+            destroyedBlock.getBlockData(),
+            Material.AIR.createBlockData(),
+            destroyedBlock.getLocation()
+        );
     }
 
     public void handleBlockGrow(BlockGrowEvent event) {
-        updateBlockStateForNearbyPlayers(event.getNewState().getBlock());
+        handleModernBlockChange(
+            event.getBlock().getBlockData(),
+            event.getNewState().getBlockData(),
+            event.getBlock().getLocation()
+        );
     }
 
     public void handleBlockFade(BlockFadeEvent event) {
-        updateBlockStateForNearbyPlayers(event.getNewState().getBlock());
+        handleModernBlockChange(
+            event.getBlock().getBlockData(),
+            event.getNewState().getBlockData(),
+            event.getBlock().getLocation()
+        );
     }
 
     public void handleBlockForm(BlockFormEvent event) {
-        updateBlockStateForNearbyPlayers(event.getNewState().getBlock());
+        handleModernBlockChange(
+            event.getBlock().getBlockData(),
+            event.getNewState().getBlockData(),
+            event.getBlock().getLocation()
+        );
     }
 
     public void handleBlockSpread(BlockSpreadEvent event) {
-        updateBlockStateForNearbyPlayers(event.getNewState().getBlock());
+        handleModernBlockChange(
+            event.getBlock().getBlockData(),
+            event.getNewState().getBlockData(),
+            event.getBlock().getLocation()
+        );
     }
 
-    private void updateBlockStateForNearbyPlayers(Block block) {
-        Location blockLocation = block.getLocation();
-        double radiusSq = 6400;
+    private void handleModernBlockChange(BlockData before, BlockData after, Location location) {
+        if (!isFeatureEnabled() || plugin.viaBlocksEnabledPlayers.isEmpty() || location == null) {
+            return;
+        }
+        boolean beforeModern = before != null && isModernMaterial(before.getMaterial());
+        boolean afterModern = after != null && isModernMaterial(after.getMaterial());
+        if (!beforeModern && !afterModern) {
+            return;
+        }
+        if (afterModern) {
+            sendBlockStateUpdateToNearbyPlayers(location, after);
+        } else {
+            sendClearUpdateToNearbyPlayers(location);
+        }
+        invalidateChunkCache(location.getChunk());
+    }
 
-        for (Player player : block.getWorld().getPlayers()) {
-            if (plugin.isPlayerEnabled(player) && player.getLocation().distanceSquared(blockLocation) < radiusSq) {
-                int stateId;
-                if (isModernMaterial(block.getType())) {
-                    BlockData data = block.getBlockData();
-                    stateId = blockDataIdCache.computeIfAbsent(data, key -> {
-                         return this.paletteManager.getOrCreateId(key.getAsString());
-                    });
-                } else {
-                    stateId = 0;
-                }
+    private boolean isFeatureEnabled() {
+        return plugin.plugin.getConfig().getBoolean("viablocks.viablocks-enabled", false);
+    }
 
-                if (stateId != -1) {
-                    sendPacket(player, stateId, blockLocation);
-                }
+    private void sendBlockStateUpdateToNearbyPlayers(Location location, BlockData data) {
+        if (data == null || location.getWorld() == null) {
+            return;
+        }
+        int stateId = blockDataIdCache.computeIfAbsent(data, key -> {
+            return this.paletteManager.getOrCreateId(key.getAsString());
+        });
+        if (stateId == -1) {
+            return;
+        }
+
+        World world = location.getWorld();
+        for (Player player : world.getPlayers()) {
+            if (plugin.isPlayerEnabled(player) && player.getLocation().distanceSquared(location) < UPDATE_RADIUS_SQUARED) {
+                sendPacket(player, stateId, location);
             }
         }
     }
-    
+
     private void sendClearUpdateToNearbyPlayers(Location location) {
+        if (!isFeatureEnabled() || plugin.viaBlocksEnabledPlayers.isEmpty() || location.getWorld() == null) {
+            return;
+        }
         final int AIR_ID = 0;
-        double radiusSq = 6400;
+        World world = location.getWorld();
         
-        for (Player player : location.getWorld().getPlayers()) {
-            if (plugin.isPlayerEnabled(player) && player.getLocation().distanceSquared(location) < radiusSq) {
+        for (Player player : world.getPlayers()) {
+            if (plugin.isPlayerEnabled(player) && player.getLocation().distanceSquared(location) < UPDATE_RADIUS_SQUARED) {
                 sendPacket(player, AIR_ID, location);
             }
         }
+    }
+
+    private void invalidateChunkCache(Chunk chunk) {
+        if (chunk == null) {
+            return;
+        }
+        chunkPacketCache.invalidate(new ChunkKey(chunk.getWorld().getName(), chunk.getX(), chunk.getZ()));
     }
 
     private void sendPacket(Player player, int stateId, Location location) {
@@ -307,12 +386,17 @@ public class CustomBlockListener {
         blockDataIdCache.clear();
         pendingUpdates.clear();
         pendingFlush.clear();
+        chunkPacketCache.invalidateAll();
     }
     
     private void runSync(Runnable task) { 
         if (!plugin.plugin.isEnabled()) return;
         try {
-            plugin.plugin.getServer().getScheduler().runTask(plugin.plugin, task); 
+            if (Bukkit.isPrimaryThread()) {
+                task.run();
+            } else {
+                plugin.plugin.getServer().getScheduler().runTask(plugin.plugin, task); 
+            }
         } catch (Exception e) {
         }
     }

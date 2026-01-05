@@ -10,7 +10,7 @@ commands:
     viablocks:
         description: Main command for ViaBlocks.
         usage: /viablocks <get|refresh>
-        permission: viablocks.command
+        permission: tuffx.viablocks.command
     tuffx:
         description: Main command for TuffX.
         usage: /tuffx <reload>
