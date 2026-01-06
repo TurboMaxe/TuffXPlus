@@ -45,8 +45,6 @@ public final class ViaBlocksPlugin {
 
     public final Set<UUID> viaBlocksEnabledPlayers = new HashSet<>();
     public CustomBlockListener blockListener;
-    public ChunkSenderManager chunkSenderManager; 
-    public ChunkPacketListener cpl;
     static ViaBlocksPlugin instance;
 
     private File playerDataFile;
@@ -83,10 +81,6 @@ public final class ViaBlocksPlugin {
             chunkExecutor.shutdownNow();
         }
         this.chunkExecutor = Executors.newFixedThreadPool(Math.max(1, Runtime.getRuntime().availableProcessors()));
-
-        if (chunkSenderManager != null) {
-            chunkSenderManager.updateSettings(this.chunkSendIntervalTicks, this.chunksPerTick);
-        }
 
         if (playerDataFile == null) {
             playerDataFile = new File(plugin.getDataFolder(), "players.yml");
@@ -131,12 +125,7 @@ public final class ViaBlocksPlugin {
         plugin.getServer().getMessenger().registerOutgoingPluginChannel(plugin, CLIENTBOUND_CHANNEL);
         plugin.getServer().getMessenger().registerIncomingPluginChannel(plugin, SERVERBOUND_CHANNEL, plugin);
 
-        this.chunkSenderManager = new ChunkSenderManager(this, this.chunkSendIntervalTicks, this.chunksPerTick);
-
-        this.blockListener = new CustomBlockListener(this, this.versionAdapter, this.paletteManager, this.chunkSenderManager);
-
-        this.cpl = new ChunkPacketListener(this);
-        this.cpl.start();
+        this.blockListener = new CustomBlockListener(this, this.versionAdapter, this.paletteManager);
 
         plugin.getCommand("viablocks").setExecutor(plugin);
         plugin.getLogger().info("ViaBlocks has been enabled successfully and is listening for client handshakes.");
@@ -188,10 +177,6 @@ public final class ViaBlocksPlugin {
             chunkExecutor = null;
         }
 
-        if (cpl != null) {
-            cpl.stop();
-        }
-
         plugin.getLogger().info("ViaBlocks has been disabled.");
     }
     private void setupPlayerData() {
@@ -220,7 +205,8 @@ public final class ViaBlocksPlugin {
     public CustomBlockListener getBlockListener() { return this.blockListener; }
 
     public boolean onTuffXCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!(sender instanceof Player)) { sender.sendMessage("This command can only be executed by a player."); return true; } Player player = (Player) sender; if (args.length > 0) { if (args[0].equalsIgnoreCase("get")) { if (!player.hasPermission("tuffx.viablocks.command.get")) { player.sendMessage("Â§cYou do not have permission to use this command."); return true; } this.versionAdapter.giveCustomBlocks(player); player.sendMessage("Â§aYou have been given a set of custom blocks."); return true; } else if (args[0].equalsIgnoreCase("refresh")) { if (!player.hasPermission("tuffx.viablocks.command.refresh")) { player.sendMessage("Â§cYou do not have permission to use this command."); return true; } player.sendMessage("Â§aRefreshing modern blocks in your view distance..."); World world = player.getWorld(); int viewDistance = this.versionAdapter.getClientViewDistance(player); int playerChunkX = player.getLocation().getChunk().getX(); int playerChunkZ = player.getLocation().getChunk().getZ(); for (int x = -viewDistance; x <= viewDistance; x++) { for (int z = -viewDistance; z <= viewDistance; z++) { int chunkX = playerChunkX + x; int chunkZ = playerChunkZ + z; if (world.isChunkLoaded(chunkX, chunkZ)) { blockListener.processChunkForSinglePlayer(world.getChunkAt(chunkX, chunkZ), player); } } } player.sendMessage("Â§aRefresh complete!"); return true; } } player.sendMessage("Â§cInvalid usage. Use: /viablocks <get|refresh>"); return true;
+        //if (!(sender instanceof Player)) { sender.sendMessage("This command can only be executed by a player."); return true; } Player player = (Player) sender; if (args.length > 0) { if (args[0].equalsIgnoreCase("get")) { if (!player.hasPermission("tuffx.viablocks.command.get")) { player.sendMessage("Â§cYou do not have permission to use this command."); return true; } this.versionAdapter.giveCustomBlocks(player); player.sendMessage("Â§aYou have been given a set of custom blocks."); return true; } else if (args[0].equalsIgnoreCase("refresh")) { if (!player.hasPermission("tuffx.viablocks.command.refresh")) { player.sendMessage("Â§cYou do not have permission to use this command."); return true; } player.sendMessage("Â§aRefreshing modern blocks in your view distance..."); World world = player.getWorld(); int viewDistance = this.versionAdapter.getClientViewDistance(player); int playerChunkX = player.getLocation().getChunk().getX(); int playerChunkZ = player.getLocation().getChunk().getZ(); for (int x = -viewDistance; x <= viewDistance; x++) { for (int z = -viewDistance; z <= viewDistance; z++) { int chunkX = playerChunkX + x; int chunkZ = playerChunkZ + z; if (world.isChunkLoaded(chunkX, chunkZ)) { blockListener.processChunkForSinglePlayer(world.getChunkAt(chunkX, chunkZ), player); } } } player.sendMessage("Â§aRefresh complete!"); return true; } } player.sendMessage("Â§cInvalid usage. Use: /viablocks <get|refresh>"); return true;
+        return false;
     }
 }
 

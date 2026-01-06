@@ -43,11 +43,11 @@ import java.util.concurrent.TimeUnit;
 
 public class CustomBlockListener {
 
-    private final ViaBlocksPlugin plugin;
+    public final ViaBlocksPlugin plugin;
     private final VersionAdapter versionAdapter;
     private final PaletteManager paletteManager;
     private final EnumSet<Material> modernMaterials;
-    private final ChunkSenderManager chunkSenderManager;
+    private final NettyInjector nettyInjector;
     private static final Map<String, Integer> worldMinHeights = new ConcurrentHashMap<>();
     private static volatile Method minHeightMethod;
     private static volatile boolean minHeightChecked;
@@ -63,111 +63,93 @@ public class CustomBlockListener {
     private static final byte[] EMPTY_PACKET = new byte[0];
     
     private final Map<BlockData, Integer> blockDataIdCache = new ConcurrentHashMap<>();
-    private final Cache<ChunkKey, byte[]> chunkPacketCache;
+    private final Cache<String, byte[]> chunkPacketCache;
 
     private record ChunkKey(String world, int x, int z) {}
 
-    public CustomBlockListener(ViaBlocksPlugin plugin, VersionAdapter versionAdapter, PaletteManager paletteManager, ChunkSenderManager chunkSenderManager) {
+    public CustomBlockListener(ViaBlocksPlugin plugin, VersionAdapter versionAdapter, PaletteManager paletteManager) {
         this.plugin = plugin;
         this.versionAdapter = versionAdapter;
         this.paletteManager = paletteManager;
-        this.chunkSenderManager = chunkSenderManager; 
         this.modernMaterials = versionAdapter.getModernMaterials();
+        this.nettyInjector = new NettyInjector(this);
         this.chunkPacketCache = CacheBuilder.newBuilder()
-            .maximumSize(2048)
+            .maximumSize(4096) 
             .expireAfterAccess(5, TimeUnit.MINUTES)
             .build();
     }
 
+    public byte[] getCachedChunkData(int x, int z) {
+        for (World world : Bukkit.getWorlds()) {
+            String key = world.getName() + "_" + x + "_" + z;
+            byte[] data = chunkPacketCache.getIfPresent(key);
+            if (data != null) return data;
+        }
+        return null;
+    }
+
     public void onViaBlocksPlayerJoin(Player player) {
-        if (plugin.plugin.getConfig().getBoolean("viablocks.send-welcome-book", true) && plugin.isFirstJoin(player)) {
+        nettyInjector.inject(player);
+
+        if (plugin.isFirstJoin(player)) {
             plugin.sendWelcomeGui(player);
             plugin.markPlayerAsJoined(player);
         }
         sendPaletteToClient(player);
+        
         runSync(() -> {
             if (!player.isOnline()) return;
-
             World world = player.getWorld();
-            int viewDistance = Math.min(this.versionAdapter.getClientViewDistance(player), 12); 
-            int playerChunkX = player.getLocation().getChunk().getX();
-            int playerChunkZ = player.getLocation().getChunk().getZ();
-            
-            List<Chunk> chunksToLoad = new ArrayList<>();
+            int viewDistance = Math.min(this.versionAdapter.getClientViewDistance(player), 12);
+            int px = player.getLocation().getChunk().getX();
+            int pz = player.getLocation().getChunk().getZ();
+
             for (int x = -viewDistance; x <= viewDistance; x++) {
                 for (int z = -viewDistance; z <= viewDistance; z++) {
-                    int cx = playerChunkX + x;
-                    int cz = playerChunkZ + z;
+                    int cx = px + x;
+                    int cz = pz + z;
                     if (world.isChunkLoaded(cx, cz)) {
-                         chunksToLoad.add(world.getChunkAt(cx, cz));
+                        prepareChunkCache(world.getChunkAt(cx, cz));
                     }
                 }
-            }
-
-            if (!chunksToLoad.isEmpty()) {
-                chunkSenderManager.addChunksToQueue(player, chunksToLoad);
             }
         });
     }
 
     public void handlePlayerQuit(PlayerQuitEvent event) {
+        nettyInjector.eject(event.getPlayer());
+        
         UUID playerId = event.getPlayer().getUniqueId();
         pendingUpdates.remove(playerId);
         pendingFlush.remove(playerId);
         plugin.setPlayerEnabled(event.getPlayer(), false);
-        chunkSenderManager.onPlayerQuit(event.getPlayer());
     }
 
     public void handleChunkLoad(ChunkLoadEvent event) {
-        Chunk chunk = event.getChunk();
-
-        List<Player> players = chunk.getWorld().getPlayers();
-        if (players.isEmpty()) return;
-
-        for (Player player : players) {
-            chunkSenderManager.addChunkToQueue(player, chunk);
-        }
+        prepareChunkCache(event.getChunk());
     }
 
-    public void processChunkForSinglePlayer(Chunk chunk, Player player) {
-        if (!chunk.isLoaded() || modernMaterials.isEmpty() || !isFeatureEnabled()) return;
+    public void prepareChunkCache(Chunk chunk) {
+        if (!chunk.isLoaded() || modernMaterials.isEmpty()) return;
 
-        World world = chunk.getWorld();
-        ChunkKey cacheKey = new ChunkKey(world.getName(), chunk.getX(), chunk.getZ());
-        byte[] cached = chunkPacketCache.getIfPresent(cacheKey);
-        if (cached != null) {
-            if (cached.length > 0) {
-                runSync(() -> {
-                    if (player.isOnline()) {
-                        player.sendPluginMessage(plugin.plugin, ViaBlocksPlugin.CLIENTBOUND_CHANNEL, cached);
-                    }
-                });
-            }
-            return;
-        }
+        String key = chunk.getWorld().getName() + "_" + chunk.getX() + "_" + chunk.getZ();
+        
+        if (chunkPacketCache.getIfPresent(key) != null) return;
 
         ChunkSnapshot snapshot = chunk.getChunkSnapshot(false, false, false);
-        int minHeight = getMinHeight(world);
-        int maxHeight = world.getMaxHeight();
+        int minHeight = getMinHeight(chunk.getWorld());
+        int maxHeight = chunk.getWorld().getMaxHeight();
         
-        plugin.chunkExecutor.submit(() -> {
-            if (!plugin.plugin.isEnabled()) return;
-
+        // --- CHANGE: RUN DIRECTLY (SYNC) INSTEAD OF EXECUTOR ---
+        // plugin.chunkExecutor.submit(() -> { 
             Map<Integer, List<Long>> foundBlocks = findModernBlocksInChunk(snapshot, minHeight, maxHeight);
             if (foundBlocks.isEmpty()) {
-                chunkPacketCache.put(cacheKey, EMPTY_PACKET);
-                return;
+                chunkPacketCache.put(key, EMPTY_PACKET);
+            } else {
+                chunkPacketCache.put(key, buildChunkPacket(foundBlocks));
             }
-            byte[] packetData = buildChunkPacket(foundBlocks);
-            chunkPacketCache.put(cacheKey, packetData);
-            if (plugin.plugin.isEnabled()) {
-                runSync(() -> {
-                    if (player.isOnline()) {
-                        player.sendPluginMessage(plugin.plugin, ViaBlocksPlugin.CLIENTBOUND_CHANNEL, packetData);
-                    }
-                });
-            }
-        });
+        // });
+        // -------------------------------------------------------
     }
 
     private Map<Integer, List<Long>> findModernBlocksInChunk(ChunkSnapshot chunkSnapshot, int minHeight, int maxHeight) {
@@ -355,7 +337,7 @@ public class CustomBlockListener {
     
     private byte[] buildChunkPacket(Map<Integer, List<Long>> blockData) {
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
-        out.writeUTF("ADD_CHUNK");
+        out.writeUTF("ADD_CHUNK"); 
         out.writeInt(blockData.size());
         for (Map.Entry<Integer, List<Long>> entry : blockData.entrySet()) {
             out.writeInt(entry.getKey());
