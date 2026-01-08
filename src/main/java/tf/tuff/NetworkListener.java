@@ -1,3 +1,5 @@
+// TODO: netty injection instead
+
 package tf.tuff;
 
 import com.github.retrooper.packetevents.event.PacketListener;
