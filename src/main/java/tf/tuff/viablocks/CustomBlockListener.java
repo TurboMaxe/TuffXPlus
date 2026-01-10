@@ -56,7 +56,7 @@ public class CustomBlockListener {
     private static final long Y_MASK = (1L << 12) - 1L;
     private static final int Y_SHIFT = 0;
     private static final int Z_SHIFT = 12;
-    private static final int X_SHIFT = 12 + 26;
+    private static final int X_SHIFT = 12 + 26; 
     private final Map<UUID, Map<Integer, List<Long>>> pendingUpdates = new HashMap<>();
     private final Set<UUID> pendingFlush = new HashSet<>();
     private static final double UPDATE_RADIUS_SQUARED = 6400;
@@ -64,6 +64,8 @@ public class CustomBlockListener {
     
     private final Map<BlockData, Integer> blockDataIdCache = new ConcurrentHashMap<>();
     private final Cache<String, byte[]> chunkPacketCache;
+
+    private final Map<Long, Integer> recentModernChanges = new ConcurrentHashMap<>();
 
     private record ChunkKey(String world, int x, int z) {}
 
@@ -210,6 +212,47 @@ public class CustomBlockListener {
         return foundBlocks;
     }
 
+    public byte[] getExtraDataForMultiBlock(World world, List<Long> locations) {
+        Map<Integer, List<Long>> foundBlocks = new HashMap<>();
+        
+        for (long packedLoc : locations) {
+            int x = (int) (packedLoc >> 38); 
+            
+            int y = (int) ((packedLoc << 52) >> 52); 
+            
+            int z = (int) ((packedLoc << 26) >> 38);
+            
+            Block block = world.getBlockAt(x, y, z);
+            BlockData data = block.getBlockData();
+            
+            if (isModernMaterial(data.getMaterial())) {
+                int id = getMaterialId(data);
+                if (id != -1) {
+                    foundBlocks.computeIfAbsent(id, k -> new ArrayList<>()).add(packedLoc);
+                }
+            }
+        }
+
+        if (foundBlocks.isEmpty()) return null;
+        return buildChunkPacket(foundBlocks); 
+    }
+
+    public byte[] getExtraDataForSingleBlock(World world, int x, int y, int z) {
+        Block block = world.getBlockAt(x, y, z);
+        BlockData data = block.getBlockData();
+        
+        if (!isModernMaterial(data.getMaterial())) return null;
+
+        int id = getMaterialId(data);
+        if (id == -1) return null;
+
+        ByteArrayDataOutput out = ByteStreams.newDataOutput();
+        out.writeUTF("ADD_SINGLE");
+        out.writeInt(id);
+        out.writeLong(packLocation(x, y, z));
+        return out.toByteArray();
+    }
+
     public void handleBlockPlace(BlockPlaceEvent event) {
         handleModernBlockChange(
             event.getBlockReplacedState().getBlockData(),
@@ -278,21 +321,23 @@ public class CustomBlockListener {
     }
 
     private void handleModernBlockChange(BlockData before, BlockData after, Location location) {
-        if (!isFeatureEnabled() || plugin.viaBlocksEnabledPlayers.isEmpty() || location == null) return;
+        if (!isFeatureEnabled() || location == null) return;
 
-        boolean beforeModern = before != null && isModernMaterial(before.getMaterial());
         boolean afterModern = after != null && isModernMaterial(after.getMaterial());
-        
-        if (!beforeModern && !afterModern) return;
+        long packed = packLocation(location);
 
-        invalidateChunkCache(location.getChunk());
-
-        int id = 0;
         if (afterModern) {
-            id = getMaterialId(after);
+            int id = getMaterialId(after);
+            recentModernChanges.put(packed, id);
+        } else {
+            recentModernChanges.remove(packed);
         }
 
-        sendSingleUpdate(location, id);
+        invalidateChunkCache(location.getChunk());
+    }
+
+    public Integer getRecentChange(long packed) {
+        return recentModernChanges.get(packed);
     }
 
     private boolean isFeatureEnabled() {
@@ -441,11 +486,11 @@ public class CustomBlockListener {
         });
     }
     
-    private long packLocation(int x, int y, int z) {
+    public long packLocation(int x, int y, int z) {
         return ((long)x & X_MASK) << X_SHIFT | ((long)z & Z_MASK) << Z_SHIFT | ((long)y & Y_MASK);
     }
 
-    private long packLocation(Location loc) {
+    public long packLocation(Location loc) {
         return packLocation(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
     }
 }

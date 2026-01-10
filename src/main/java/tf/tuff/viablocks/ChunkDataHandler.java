@@ -9,6 +9,12 @@ import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import org.bukkit.entity.Player;
 
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class ChunkDataHandler extends ChannelOutboundHandlerAdapter {
 
     private final CustomBlockListener blockListener;
@@ -27,25 +33,66 @@ public class ChunkDataHandler extends ChannelOutboundHandlerAdapter {
             
             try {
                 int packetId = readVarInt(buf);
+                byte[] extraData = null;
                 
                 if (packetId == 0x20) {
                     int x = buf.readInt();
                     int z = buf.readInt();
                     
-                    byte[] extraData = blockListener.getExtraDataForChunk(player.getWorld().getName(), x, z); 
+                    extraData = blockListener.getExtraDataForChunk(player.getWorld().getName(), x, z); 
+                } else if (packetId == 0x0B) {
+                    int currentIndex = buf.readerIndex();
+                    long val = buf.getLong(currentIndex); 
                     
-                    if (extraData != null && extraData.length > 0) {
-                        buf.resetReaderIndex(); 
-                        
-                        ByteBuf tail = ctx.alloc().buffer();
-                        tail.writeBytes(extraData);
-                        
-                        CompositeByteBuf composite = ctx.alloc().compositeBuffer();
-                        composite.addComponents(true, buf.retain(), tail);
-                        
-                        super.write(ctx, composite, promise);
-                        return;
+                    int x = (int) (val >> 38);
+                    int y = (int) ((val >> 26) & 0xFFF);
+                    int z = (int) (val << 38 >> 38);
+                    if (x >= 33554432) x -= 67108864;
+                    if (y >= 2048) y -= 4096;
+                    if (z >= 33554432) z -= 67108864;
+
+                    long tuffPacked = blockListener.packLocation(x, y, z);
+                    
+                    Integer modernId = blockListener.getRecentChange(tuffPacked);
+
+                    if (modernId != null) {
+                        ByteArrayDataOutput out = ByteStreams.newDataOutput();
+                        out.writeUTF("ADD_SINGLE");
+                        out.writeInt(modernId);
+                        out.writeLong(tuffPacked);
+                        extraData = out.toByteArray();
                     }
+                } else if (packetId == 0x10) { 
+                    int chunkX = buf.readInt();
+                    int chunkZ = buf.readInt();
+                    
+                    if (Math.abs(chunkX) < 2000000 && Math.abs(chunkZ) < 2000000) {
+                        int recordCount = readVarInt(buf);
+                        List<Long> locations = new ArrayList<>();
+                        for (int i = 0; i < recordCount; i++) {
+                            short horiz = buf.readUnsignedByte();
+                            int y = buf.readUnsignedByte();
+                            readVarInt(buf); 
+                            
+                            int x = (horiz >> 4 & 15) + (chunkX * 16);
+                            int z = (horiz & 15) + (chunkZ * 16);
+                            locations.add(blockListener.packLocation(x, y, z));
+                        }
+                        extraData = blockListener.getExtraDataForMultiBlock(player.getWorld(), locations);
+                    }
+                }
+
+                if (extraData != null && extraData.length > 0) {
+                    buf.resetReaderIndex(); 
+                    
+                    ByteBuf tail = ctx.alloc().buffer();
+                    tail.writeBytes(extraData);
+                    
+                    CompositeByteBuf composite = ctx.alloc().compositeBuffer();
+                    composite.addComponents(true, buf.retain(), tail);
+                    
+                    super.write(ctx, composite, promise);
+                    return;
                 }
             } catch (Exception e) {
             } finally {
