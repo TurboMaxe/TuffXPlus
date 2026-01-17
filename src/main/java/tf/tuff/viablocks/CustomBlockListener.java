@@ -230,6 +230,12 @@ public class CustomBlockListener {
         Map<Integer, List<Long>> foundBlocks = new HashMap<>();
         
         for (long packedLoc : locations) {
+            Integer cachedId = recentModernChanges.getIfPresent(packedLoc);
+            if (cachedId != null) {
+                foundBlocks.computeIfAbsent(cachedId, k -> new ArrayList<>()).add(packedLoc);
+                continue;
+            }
+
             int x = (int) (packedLoc >> 38); 
             
             int y = (int) ((packedLoc << 52) >> 52); 
@@ -344,7 +350,12 @@ public class CustomBlockListener {
             int id = getMaterialId(after);
             recentModernChanges.put(packed, id);
         } else {
-            recentModernChanges.invalidate(packed);
+            boolean wasModern = (before != null && isModernMaterial(before.getMaterial()));
+            if (wasModern || recentModernChanges.getIfPresent(packed) != null) {
+                recentModernChanges.put(packed, 0); 
+            } else {
+                recentModernChanges.invalidate(packed);
+            }
         }
 
         invalidateChunkCache(location.getChunk());
