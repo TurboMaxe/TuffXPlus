@@ -68,6 +68,17 @@ public class CreativeMenu {
         }
     }
 
+    public void handlePickViablock(Player player, String blockName, int hotbarSlot) {
+        Material material = Material.getMaterial(blockName.toUpperCase(Locale.ROOT));
+        if (material == null || !material.isItem()) {
+            return;
+        }
+        if (hotbarSlot < 0 || hotbarSlot > 8) {
+            hotbarSlot = 0;
+        }
+        player.getInventory().setItem(hotbarSlot, new ItemStack(material, 1));
+    }
+
     public void onPlayerInventoryClick(InventoryClickEvent event) {
         Player player = (Player) event.getWhoClicked();
         UUID playerUUID = player.getUniqueId();

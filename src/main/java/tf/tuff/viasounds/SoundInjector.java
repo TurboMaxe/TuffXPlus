@@ -26,7 +26,6 @@ public class SoundInjector {
             return;
         }
 
-
         channel.eventLoop().submit(() -> {
             try {
                 if (channel.pipeline().get("viasounds_handler") != null) {

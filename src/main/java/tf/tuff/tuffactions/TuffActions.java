@@ -118,6 +118,19 @@ public class TuffActions {
                 String item = new String(itemBytes, StandardCharsets.UTF_8);
                 int amount = in.readInt();
                 creativeManager.handlePlaceholderTaken(player, item, amount);
+            } else if ("pick_viablock".equals(action) && creativeEnabled){
+                if (player.getGameMode() != GameMode.CREATIVE) {
+                    return;
+                }
+                int blockLength = in.readUnsignedByte();
+                if (in.available() < blockLength + 1) {
+                    return;
+                }
+                byte[] blockBytes = new byte[blockLength];
+                in.readFully(blockBytes);
+                String blockName = new String(blockBytes, StandardCharsets.UTF_8);
+                int hotbarSlot = in.readUnsignedByte();
+                creativeManager.handlePickViablock(player, blockName, hotbarSlot);
             }
         } catch (IOException e) {
                 plugin.getLogger().log(Level.WARNING, "Failed to read a plugin message from " + player.getName(), e);
