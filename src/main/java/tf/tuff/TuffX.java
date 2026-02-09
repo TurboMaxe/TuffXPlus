@@ -52,6 +52,7 @@ import tf.tuff.y0.Y0Plugin;
 import tf.tuff.viablocks.ViaBlocksPlugin;
 import tf.tuff.tuffactions.TuffActions;
 import tf.tuff.viasounds.ViaSoundsPlugin;
+import tf.tuff.viaentities.ViaEntitiesPlugin;
 import tf.tuff.netty.ChunkInjector;
 
 public class TuffX extends JavaPlugin implements Listener, PluginMessageListener, CommandExecutor {
@@ -62,6 +63,7 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
     public ViaBlocksPlugin viaBlocksPlugin;
     public TuffActions tuffActions;
     public ViaSoundsPlugin viaSoundsPlugin;
+    public ViaEntitiesPlugin viaEntitiesPlugin;
     private ChunkInjector chunkInjector;
     
     @Override
@@ -71,11 +73,13 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
         this.viaBlocksPlugin = new ViaBlocksPlugin(this);
         this.tuffActions = new TuffActions(this);
         this.viaSoundsPlugin = new ViaSoundsPlugin(this);
+        this.viaEntitiesPlugin = new ViaEntitiesPlugin(this);
 
         y0Plugin.onTuffXLoad();
         tuffActions.onTuffXLoad();
         viaBlocksPlugin.onTuffXLoad();
         viaSoundsPlugin.onTuffXLoad();
+        viaEntitiesPlugin.onTuffXLoad();
         
         PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this));
         PacketEvents.getAPI().getSettings().reEncodeByDefault(false)
@@ -92,6 +96,7 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
         tuffActions.onTuffXEnable();
         viaBlocksPlugin.onTuffXEnable();
         viaSoundsPlugin.onTuffXEnable();
+        viaEntitiesPlugin.onTuffXEnable();
 
         chunkInjector = new ChunkInjector(viaBlocksPlugin.blockListener, y0Plugin);
         viaBlocksPlugin.blockListener.setChunkInjector(chunkInjector);
@@ -127,6 +132,7 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
         viaBlocksPlugin.onTuffXDisable();
         tuffActions.onTuffXDisable();
         viaSoundsPlugin.onTuffXDisable();
+        viaEntitiesPlugin.onTuffXDisable();
         
         if (serverRegistry != null) {
             serverRegistry.disconnect();
@@ -150,7 +156,8 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
         viaBlocksPlugin.onTuffXReload();
         y0Plugin.onTuffXReload();
         tuffActions.onTuffXReload();
-        viaSoundsPlugin.onTuffXReload(); 
+        viaSoundsPlugin.onTuffXReload();
+        viaEntitiesPlugin.onTuffXReload(); 
         
         getLogger().info("TuffX reloaded.");
     }
@@ -192,6 +199,8 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
         if (channel.equals("eagler:tuffactions")) tuffActions.handlePacket(player,message);
 
         if (channel.equals("viasounds:handshake")) viaSoundsPlugin.handlePacket(player,message);
+
+        if (channel.equals("viaentities:handshake")) viaEntitiesPlugin.handlePacket(player,message);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -225,6 +234,7 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
         tuffActions.handlePlayerQuit(e);
         viaBlocksPlugin.blockListener.handlePlayerQuit(e);
         viaSoundsPlugin.handlePlayerQuit(e);
+        viaEntitiesPlugin.handlePlayerQuit(e);
     }
     
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
