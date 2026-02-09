@@ -10,7 +10,7 @@ import java.util.UUID;
 public final class ViaEntitiesPlugin {
 
     public static final String CLIENTBOUND_CHANNEL = "viaentities:data";
-    public static final String SERVERBOUND_CHANNEL = "viaentities:handshake";
+    public static final String SERVERBOUND_CHANNEL = "entities:handshake";
 
     public final Set<UUID> viaEntitiesEnabledPlayers = new HashSet<>();
 

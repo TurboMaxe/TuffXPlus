@@ -34,7 +34,7 @@ import java.util.concurrent.Executors;
 public final class ViaBlocksPlugin {
 
     public static final String CLIENTBOUND_CHANNEL = "viablocks:data";
-    public static final String SERVERBOUND_CHANNEL = "viablocks:handshake2";
+    public static final String SERVERBOUND_CHANNEL = "viablocks:handshake";
 
     public final Set<UUID> viaBlocksEnabledPlayers = new HashSet<>();
     public CustomBlockListener blockListener;

@@ -194,13 +194,13 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
 
         if (channel.equals("eagler:below_y0")) y0Plugin.handlePacket(player,message);
 
-        if (channel.equals("viablocks:handshake2")) viaBlocksPlugin.handlePacket(player,message);
+        if (channel.equals("viablocks:handshake")) viaBlocksPlugin.handlePacket(player,message);
 
         if (channel.equals("eagler:tuffactions")) tuffActions.handlePacket(player,message);
 
         if (channel.equals("viasounds:handshake")) viaSoundsPlugin.handlePacket(player,message);
 
-        if (channel.equals("viaentities:handshake")) viaEntitiesPlugin.handlePacket(player,message);
+        if (channel.equals("entities:handshake")) viaEntitiesPlugin.handlePacket(player,message);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
