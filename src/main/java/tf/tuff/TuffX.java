@@ -25,6 +25,8 @@ import org.bukkit.event.block.BlockSpreadEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityToggleGlideEvent;
+import org.bukkit.event.entity.EntityToggleSwimEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -237,6 +239,16 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
         viaEntitiesPlugin.handlePlayerQuit(e);
     }
     
+    @EventHandler
+    public void onToggleSwim(EntityToggleSwimEvent e) {
+        tuffActions.handleToggleSwim(e);
+    }
+
+    @EventHandler
+    public void onToggleGlide(EntityToggleGlideEvent e) {
+        tuffActions.handleToggleGlide(e);
+    }
+
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBlockSpread(BlockSpreadEvent e) {
         viaBlocksPlugin.blockListener.handleBlockSpread(e);

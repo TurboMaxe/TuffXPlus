@@ -10,6 +10,8 @@ import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityToggleGlideEvent;
+import org.bukkit.event.entity.EntityToggleSwimEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -101,6 +103,8 @@ public class TuffActions {
 
             if ("swimming_state".equals(action) && swimmingEnabled) {
                 swimmingManager.handleSwimState(player, in.readBoolean());
+            } else if ("elytra_state".equals(action) && swimmingEnabled) {
+                swimmingManager.handleElytraState(player, in.readBoolean());
             } else if ("creative_ready".equals(action) && creativeEnabled){
                 creativeManager.handleCreativeReady(player);
             } else if ("swim_ready".equals(action) && swimmingEnabled){
@@ -154,6 +158,18 @@ public class TuffActions {
             swimmingManager.handleSwimQuit(event);
         }
         tuffPlayers.remove(event.getPlayer().getUniqueId());
+    }
+
+    public void handleToggleSwim(EntityToggleSwimEvent event) {
+        if (swimmingEnabled) {
+            swimmingManager.handleToggleSwim(event);
+        }
+    }
+
+    public void handleToggleGlide(EntityToggleGlideEvent event) {
+        if (swimmingEnabled) {
+            swimmingManager.handleToggleGlide(event);
+        }
     }
 
     public void handlePlayerInventoryClick(InventoryClickEvent event) {
