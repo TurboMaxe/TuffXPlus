@@ -10,6 +10,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
 import org.bukkit.GameMode;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityToggleGlideEvent;
 import org.bukkit.event.entity.EntityToggleSwimEvent;
@@ -21,6 +23,7 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPl
 
 import tf.tuff.TuffX;
 import tf.tuff.tuffactions.creative.CreativeMenu;
+import tf.tuff.tuffactions.restrictions.Restrictions;
 import tf.tuff.tuffactions.swimming.Swimming;
 
 public class TuffActions {
@@ -29,9 +32,11 @@ public class TuffActions {
 
     private Swimming swimmingManager;
     private CreativeMenu creativeManager;
+    private Restrictions restrictions;
 
     public static boolean swimmingEnabled = false;
     public static boolean creativeEnabled = false;
+    public static boolean restrictionsEnabled = false;
     
     public final TuffX plugin;
 
@@ -48,9 +53,11 @@ public class TuffActions {
 
         swimmingEnabled = plugin.getConfig().getBoolean("swimming.enabled", true);
         creativeEnabled = plugin.getConfig().getBoolean("creative-items.enabled", true);
+        restrictionsEnabled = plugin.getConfig().getBoolean("restrictions.enabled", false);
 
         if (swimmingEnabled) info("Swimming enabled.");
         if (creativeEnabled) info("Creative items enabled.");
+        if (restrictionsEnabled) info("Restrictions enabled.");
     }
 
     public void onTuffXLoad() {
@@ -58,6 +65,7 @@ public class TuffActions {
     
     public void onTuffXReload() {
         loadConfig();
+        restrictions.onTuffXReload();
 
         info("Misc features reloaded.");
     }
@@ -68,6 +76,7 @@ public class TuffActions {
 
         this.swimmingManager = new Swimming(this);
         this.creativeManager = new CreativeMenu(this);
+        this.restrictions = new Restrictions(this);
         info("Finished enabling features.");
 
         plugin.getServer().getMessenger().registerOutgoingPluginChannel(plugin, "eagler:tuffactions");
@@ -75,6 +84,11 @@ public class TuffActions {
     }
 
     public void onTuffXDisable() {
+    }
+
+    public boolean onTuffXCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (command.getName().equalsIgnoreCase("restrictions")) return this.restrictions.onTuffXCommand(sender, command, label, args);
+        return true;
     }
 
     public void handlePacket(Player player, byte[] message) {
@@ -129,6 +143,8 @@ public class TuffActions {
                 String blockName = new String(blockBytes, StandardCharsets.UTF_8);
                 int hotbarSlot = in.readUnsignedByte();
                 creativeManager.handlePickViablock(player, blockName, hotbarSlot);
+            } else if ("restrictions_ready".equals(action)) {
+                restrictions.handleRestrictionsReady(player);
             }
         } catch (IOException e) {
             log(Level.WARNING, "Failed to read a plugin message from " + player.getName(), e);

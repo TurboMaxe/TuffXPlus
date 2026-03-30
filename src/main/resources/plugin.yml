@@ -2,7 +2,7 @@ name: ${name}
 version: ${version}
 main: tf.tuff.TuffX
 author: Potato
-authors: [Potato, llucasandersen, coleis1op]
+authors: [Potato, SyntaxSavy, llucasandersen, coleis1op, UplandJacob]
 api-version: 1.18
 depend: [ViaVersion, ViaBackwards]
 
@@ -14,6 +14,9 @@ commands:
     tuffx:
         description: Main command for TuffX.
         usage: /tuffx <reload>
+    restrictions:
+        description: Allow or disallow TuffClient modules.
+        usage: /restrictions <allow|disallow> <module>
 
 permissions:
     tuffx.reload:
@@ -27,4 +30,13 @@ permissions:
         default: op
     tuffx.viablocks.command.refresh:
         description: Allows use of the /viablocks refresh subcommand.
-        default: op 
+        default: op
+    tuffx.restrictions.command:
+        description: Allows use of the /restrictions command.
+        default: op
+    tuffx.restrictions.command.allow:
+        description: Allows use of the /restrictions allow subcommand.
+        default: op
+    tuffx.restrictions.command.disallow:
+        description: Allows use of the /restrictions disallow subcommand.
+        default: op

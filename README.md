@@ -8,7 +8,7 @@ TuffX-United is a single, unified plugin that combines:
 - ViaSounds (modern sound support)
 - TuffActions (swimming sync + creative item handling)
 
-This is not a "crack" for Minecraft. It only enables extra client integration features for TuffClient/Eaglercraft.
+**This is not a "crack" for Minecraft. It only enables extra client integration features for TuffClient/Eaglercraft.**
 
 ## Requirements
 - Java 17
@@ -20,7 +20,7 @@ PacketEvents, Jackson, and WebSocket libraries are shaded into the jar.
 ## Install
 1. Drop `TuffX-United-0.0.1.jar` into your server's `plugins` folder.
 2. Start the server to generate `plugins/TuffX/config.yml`.
-3. Configure features in `config.yml` (`y0`, `viablocks`, `swimming`, `creative-items`, `registry`).
+3. Configure features in `config.yml` (`y0`, `registry`, `viablocks`, `viasounds`,  `swimming`, `creative-items`, `restrictions`).
 4. Restart or run `/tuffx reload`.
 
 ## Features
@@ -28,17 +28,22 @@ PacketEvents, Jackson, and WebSocket libraries are shaded into the jar.
 - ViaBlocks: synchronizes modern block states to TuffX client with a custom palette.
 - ViaSounds: intercepts modern sound packets and sends them to TuffX client.
 - TuffActions: swimming state sync and creative item handling.
+- Restrictions: disallow TuffClient modules: [module list](/docs/restrictions.md)
 - Optional server registry over WebSocket (for discovery).
 
 ## Commands
 - `/tuffx reload` - reload the config
 - `/viablocks get` - give a set of custom blocks (creative)
 - `/viablocks refresh` - resend ViaBlocks data in view distance
+- `/restrictions disallow` - add a module to the disallow list and send an update to all TuffClient clients
+- `/restrictions allow` - remove a module from the disallow list and send an update
 
 ## Permissions
 - `tuffx.reload`
 - `tuffx.viablocks.command.get`
 - `tuffx.viablocks.command.refresh`
+- `tuffx.restrictions.command.disallow`
+- `tuffx.restrictions.command.allow`
 
 ## Compiling
 ```sh

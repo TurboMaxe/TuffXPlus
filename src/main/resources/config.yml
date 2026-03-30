@@ -51,6 +51,7 @@ viablocks:
 
   # Set to true to enable detailed logging in the server console for debugging.
   debug: false
+
   # Sync mode controls how often chunk and block updates are sent to clients.
   # normal: base speed for fast sync.
   # reduced: much slower updates to minimize client lag.
@@ -82,3 +83,18 @@ swimming:
 # Allows players to see 1.13+ things in creative menu
 creative-items:
   enabled: true
+
+restrictions:
+  enabled: false
+  # What TuffClient modules are not allowed
+  disallow:
+    - quickelytra
+    - fastcrystals
+    - hotbar_switcher
+    - fullbright
+    - tnt
+    - antipickup
+    - zoom
+    - glowingores
+    - rangecrosshair
+    - minimap

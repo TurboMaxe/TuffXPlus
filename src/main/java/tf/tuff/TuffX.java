@@ -157,6 +157,7 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (command.getName().equalsIgnoreCase("tuffx")) return TuffXCommand(sender, command, label, args); 
         if (command.getName().equalsIgnoreCase("viablocks")) return viaBlocksPlugin.onTuffXCommand(sender, command, label, args);
+        if (command.getName().equalsIgnoreCase("restrictions")) return tuffActions.onTuffXCommand(sender, command, label, args);
         return true;
     } 
 
@@ -288,6 +289,7 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
         getLogger().info("Other:");
         getLogger().info("• Swimming and creative items programmed by Potato (@justatypicalpotato)");
         getLogger().info("• shaded build, 1.14+ support (before merge) - llucasandersen");
+        getLogger().info("• Restrictions - UplandJacob");
         getLogger().info("• Overall plugin merges by Potato");
         getLogger().info("update v4");
     }
