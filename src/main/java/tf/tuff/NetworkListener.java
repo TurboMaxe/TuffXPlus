@@ -4,7 +4,6 @@ import com.github.retrooper.packetevents.event.PacketListener;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerChunkData;
-import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 public class NetworkListener implements PacketListener {
@@ -17,16 +16,18 @@ public class NetworkListener implements PacketListener {
 
     @Override
     public void onPacketSend(PacketSendEvent event) {
-        if (event.getPacketType() == PacketType.Play.Server.CHUNK_DATA) {
-            Player player = (Player) event.getPlayer();
-            if (player == null) return;
+        if (event.getPacketType() != PacketType.Play.Server.CHUNK_DATA) return;
 
-            WrapperPlayServerChunkData wrapper = new WrapperPlayServerChunkData(event);
-            int chunkX = wrapper.getColumn().getX();
-            int chunkZ = wrapper.getColumn().getZ();
+        Player player = event.getPlayer();
+        WrapperPlayServerChunkData wrapper = new WrapperPlayServerChunkData(event);
 
-            World world = player.getWorld();
-            plugin.y0Plugin.cpl.handleChunk(plugin, player, world, chunkX, chunkZ);
-        }
+        plugin.getY0Plugin().cpl
+                .handleChunk(plugin,
+                        player,
+                        player.getWorld(),
+                        wrapper.getColumn().getX(),
+                        wrapper.getColumn().getZ()
+                );
+
     }
 }

@@ -23,44 +23,35 @@ public class ServerRegistry {
     }
 
     private void doConnect() {
-        if (!running)
-            return;
+        if (!running) return;
 
         try {
-            client = new WebSocketClient(new URI(wsUrl)) {
+            client = new WebSocketClient(
+                    new URI(wsUrl)
+            ) {
                 @Override
                 public void onOpen(ServerHandshake h) {
                     send("{\"type\":\"register\",\"server\":\"" + server + "\"}");
                 }
-
                 @Override
-                public void onMessage(String msg) {
-                }
+                public void onMessage(String msg) {}
 
                 @Override
                 public void onClose(int code, String reason, boolean remote) {
-                    if (running) {
-                        p.getServer().getScheduler().runTaskLaterAsynchronously(p, () -> doConnect(), 100L);
-                    }
+                    if (running) p.getServer().getScheduler().runTaskLaterAsynchronously(p, () -> doConnect(), 100L);
                 }
-
                 @Override
-                public void onError(Exception e) {
-                }
+                public void onError(Exception e) {}
             };
             client.setConnectionLostTimeout(30);
             client.connect();
         } catch (Exception e) {
-            if (running) {
-                p.getServer().getScheduler().runTaskLaterAsynchronously(p, () -> doConnect(), 100L);
-            }
+            if (running) p.getServer().getScheduler().runTaskLaterAsynchronously(p, this::doConnect, 100L);
         }
     }
 
     public void disconnect() {
         running = false;
-        if (client != null) {
-            client.close();
-        }
+        if (client != null) client.close();
     }
 }

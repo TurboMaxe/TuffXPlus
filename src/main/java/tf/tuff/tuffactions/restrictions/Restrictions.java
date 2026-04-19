@@ -34,6 +34,7 @@ public class Restrictions {
 
 	private void validateConfig() {
 		boolean configUpdated = false;
+
 		if (!plugin.plugin.getConfig().contains("restrictions.enabled", true)) {
 			plugin.plugin.getConfig().set("restrictions.enabled", false);
 			configUpdated = true;
@@ -90,11 +91,12 @@ public class Restrictions {
 	private void handleSingleUpdate(Player player, String key) {
 		if (!TuffActions.restrictionsEnabled) return;
 		plugin.info("Sending restriction update for '%s' to %s".formatted(key, player.getName()));
-		try (ByteArrayOutputStream bout = new ByteArrayOutputStream(); DataOutputStream out = new DataOutputStream(bout)) {
+		try (ByteArrayOutputStream bout = new ByteArrayOutputStream();
+		     DataOutputStream out = new DataOutputStream(bout)
+		) {
 			out.writeUTF("client_feature");
 			out.writeUTF(key);
 			out.writeBoolean(!disallowed.contains(key));
-
 			plugin.sendPluginMessage(player, bout.toByteArray());
 		} catch (IOException e) {
 			plugin.log(Level.WARNING, "Failed to send Restriction "+key+" to " + player.getName(), e);

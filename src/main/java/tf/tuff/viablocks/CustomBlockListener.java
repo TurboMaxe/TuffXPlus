@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import javax.annotation.Nonnull;
 
+import lombok.Setter;
 import org.bukkit.Chunk;
 import org.bukkit.ChunkSnapshot;
 import org.bukkit.Location;
@@ -41,6 +42,7 @@ public class CustomBlockListener {
     private final VersionAdapter versionAdapter;
     private final PaletteManager paletteManager;
     private final EnumSet<Material> modernMaterials;
+    @Setter
     private tf.tuff.netty.ChunkInjector chunkInjector;
     private static final Map<String, Integer> worldMinHeights = new ConcurrentHashMap<>();
     private static final long X_MASK = (1L << 26) - 1L;
@@ -80,10 +82,6 @@ public class CustomBlockListener {
 
     public byte[] getCachedChunkData(String worldName, int x, int z) {
         return chunkPacketCache.getIfPresent(chunkKey(worldName, x, z));
-    }
-
-    public void setChunkInjector(tf.tuff.netty.ChunkInjector injector) {
-        this.chunkInjector = injector;
     }
 
     private @Nonnull String chunkKey(String worldName, int x, int z) {
@@ -201,7 +199,7 @@ public class CustomBlockListener {
                 } else {
                     chunkPacketCache.put(key, buildChunkPacket(foundBlocks));
                 }
-            } catch (Exception e) {}
+            } catch (Exception ignored) {}
         });
     }
 
@@ -284,11 +282,7 @@ public class CustomBlockListener {
 
                     if (materialId != -1) {
                         long packedLocation = packLocation(chunkX + x, y, chunkZ + z);
-                        List<Long> locs = foundBlocks.get(materialId);
-                        if (locs == null) {
-                            locs = new ArrayList<>();
-                            foundBlocks.put(materialId, locs);
-                        }
+                        List<Long> locs = foundBlocks.computeIfAbsent(materialId, k -> new ArrayList<>());
                         locs.add(packedLocation);
                     }
                 }
@@ -303,11 +297,7 @@ public class CustomBlockListener {
         for (long packedLoc : locations) {
             Integer cachedId = recentModernChanges.getIfPresent(packedLoc);
             if (cachedId != null) {
-                List<Long> locs = foundBlocks.get(cachedId);
-                if (locs == null) {
-                    locs = new ArrayList<>();
-                    foundBlocks.put(cachedId, locs);
-                }
+                List<Long> locs = foundBlocks.computeIfAbsent(cachedId, k -> new ArrayList<>());
                 locs.add(packedLoc);
                 continue;
             }
@@ -324,11 +314,7 @@ public class CustomBlockListener {
             if (isModernMaterial(data.getMaterial())) {
                 int id = getMaterialId(data);
                 if (id != -1) {
-                    List<Long> locs2 = foundBlocks.get(id);
-                    if (locs2 == null) {
-                        locs2 = new ArrayList<>();
-                        foundBlocks.put(id, locs2);
-                    }
+                    List<Long> locs2 = foundBlocks.computeIfAbsent(id, k -> new ArrayList<>());
                     locs2.add(packedLoc);
                 }
             }
@@ -382,8 +368,7 @@ public class CustomBlockListener {
 
         handleModernBlockChange(data, Material.AIR.createBlockData(), loc);
 
-        if (data instanceof Door) {
-            Door door = (Door) data;
+        if (data instanceof Door door) {
             Location otherHalf = door.getHalf() == Bisected.Half.BOTTOM
                 ? loc.clone().add(0, 1, 0)
                 : loc.clone().add(0, -1, 0);
@@ -614,7 +599,7 @@ public class CustomBlockListener {
         if (!plugin.plugin.isEnabled()) return;
         try {
             plugin.plugin.getServer().getScheduler().runTaskLater(plugin.plugin, task, delay); 
-        } catch (Exception e) {}
+        } catch (Exception ignored) {}
     }
 
     private int getMinHeight(World world) {
@@ -625,7 +610,7 @@ public class CustomBlockListener {
                 if (value instanceof Integer) {
                     return (Integer) value;
                 }
-            } catch (Exception e) {}
+            } catch (Exception ignored) {}
             return 0;
         });
     }

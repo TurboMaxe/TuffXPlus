@@ -14,6 +14,10 @@ import org.bukkit.event.world.ChunkLoadEvent;
 
 public class PlayerListener extends ListenerBase implements Listener {
 
+    public PlayerListener() {
+        super();
+    }
+
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerChangeWorld(PlayerChangedWorldEvent e) {
         y0Plugin.handlePlayerChangeWorld(e);

@@ -23,6 +23,8 @@ import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
 
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
+import tf.tuff.listeners.BlockListener;
+import tf.tuff.listeners.PlayerListener;
 import tf.tuff.netty.ChunkInjector;
 import tf.tuff.tuffactions.TuffActions;
 import tf.tuff.viablocks.ViaBlocksPlugin;
@@ -75,8 +77,8 @@ public class TuffX extends JavaPlugin implements PluginMessageListener {
             new NetworkListener(this), PacketListenerPriority.NORMAL
         );
 
-        getServer().getPluginManager().registerEvents(this, this);
-
+        Bukkit.getPluginManager().registerEvents(new BlockListener(), this);
+        Bukkit.getPluginManager().registerEvents(new PlayerListener(), this);
         setupRegistry();
         lfe();
     }

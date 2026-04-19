@@ -7,6 +7,10 @@ import org.bukkit.event.block.*;
 
 public class BlockListener extends ListenerBase implements Listener {
 
+    public BlockListener() {
+        super();
+    }
+
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBlockForm(BlockFormEvent e) {
         viaBlocksPlugin.blockListener.handleBlockForm(e);

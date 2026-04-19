@@ -31,7 +31,7 @@ public class ViaBlockIds {
 
     public ViaBlockIds(TuffX pl) {
         p = pl;
-        plugin = pl.y0Plugin;
+        plugin = pl.getY0Plugin();
         serverVersion = getServerMCVersion();
         mappingsFile = new File(pl.getDataFolder(), serverVersion + "-mappings.json");
 
@@ -49,7 +49,7 @@ public class ViaBlockIds {
         if (!mappingsFile.exists()) {
             plugin.info("Mapping file not found, generating...");
             if (!p.getDataFolder().exists()) {
-                p.getDataFolder().mkdirs();
+               if (p.getDataFolder().mkdirs()) plugin.info("Generated plugin data folder.");
             }
             generateMappings(mappingsFile);
         } else {
@@ -160,22 +160,12 @@ public class ViaBlockIds {
                 String k = s.get(i).replace("minecraft:", "");
                 String blockName = k.contains("[") ? k.substring(0, k.indexOf("[")) : k;
 
-                int[] legacy;
-
-                switch (blockName) {
-                    case "chest":
-                        legacy = new int[]{54, 0};
-                        break;
-                    case "ender_chest":
-                        legacy = new int[]{130, 0};
-                        break;
-                    case "trapped_chest":
-                        legacy = new int[]{146, 0};
-                        break;
-                    default:
-                        legacy = ctl(i);
-                        break;
-                }
+                int[] legacy = switch (blockName) {
+                    case "chest" -> new int[]{54, 0};
+                    case "ender_chest" -> new int[]{130, 0};
+                    case "trapped_chest" -> new int[]{146, 0};
+                    default -> ctl(i);
+                };
 
                 nlm.put(k, legacy);
             }
@@ -259,17 +249,17 @@ public class ViaBlockIds {
             ProtocolPathEntry e = protoPath.get(i);
             Protocol<?, ?, ?, ?> pr = e.protocol();
 
-            if (pr instanceof BackwardsProtocol) {
-                BackwardsMappingData md = ((BackwardsProtocol<?, ?, ?, ?>) pr).getMappingData();
+            if (pr instanceof BackwardsProtocol<?, ?, ?, ?> backwardsProtocol) {
+                BackwardsMappingData md = backwardsProtocol.getMappingData();
                 if (md != null && md.getBlockStateMappings() != null) {
                     int ni = md.getBlockStateMappings().getNewId(csi);
-
                     if (ni != -1) csi = ni;
                 }
             }
         }
-        int bi = csi >> 4;
-        int mt = csi & 0xF;
-        return new int[]{bi, mt};
+        return new int[] {
+                csi >> 4,
+                csi & 0xF
+        };
     }
 }
