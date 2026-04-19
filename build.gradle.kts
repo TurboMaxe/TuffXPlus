@@ -19,9 +19,24 @@ repositories {
     maven("https://repo.codemc.io/repository/maven-snapshots/")
     maven("https://jitpack.io")
     maven("https://repo.dmulloy2.net/repository/public/")
+    maven("https://repo.codemc.io/repository/maven-releases/")
 }
 
 dependencies {
+    paperweight.paperDevBundle("1.21.8-R0.1-SNAPSHOT")
+
+    /*
+    implementation("com.github.retrooper:packetevents-spigot:2.11.1")
+    compileOnly("com.viaversion:viabackwards:5.3.2")
+    compileOnly("com.viaversion:viaversion:5.4.1")
+    compileOnly("it.unimi.dsi:fastutil:8.5.16")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.15.2")
+    compileOnly("io.netty:netty-all:4.1.97.Final")
+    implementation("org.java-websocket:Java-WebSocket:1.5.4")
+    compileOnly("org.projectlombok:lombok:1.18.30")
+    annotationProcessor("org.projectlombok:lombok:1.18.30")
+    */
+
     implementation(libs.packetevents.spigot)
     compileOnly(libs.viabackwards)
     compileOnly(libs.viaversion)
@@ -31,19 +46,20 @@ dependencies {
     implementation(libs.java.websocket)
 
     compileOnly(libs.lombok)
-    annotationProcessor(libs.lombok)
+    annotationProcessor(libs.lombok) 
 }
 
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 tasks {
 
     withType<JavaCompile>().configureEach {
         options.encoding = "UTF-8"
+
     }
 
     processResources {
