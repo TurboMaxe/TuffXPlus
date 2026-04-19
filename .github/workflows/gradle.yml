@@ -35,14 +35,14 @@ jobs:
       - name: copy jar to builds
         run: |
           mkdir -p builds
-          cp build/libs/TuffX-United-0.0.1.jar builds/TuffX-United-0.0.1.jar
+          cp build/libs/*.jar builds/
 
       - name: push jar
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-          git add builds/TuffX-United-0.0.1.jar
+          git add builds/
           if git diff --cached --quiet; then
             echo "No build artifact changes to commit."
             exit 0
