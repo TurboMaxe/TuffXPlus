@@ -1,4 +1,4 @@
-package tf.tuff.y0;
+package tf.tuff.services.y0;
 
 import tf.tuff.TuffX;
 
@@ -6,11 +6,13 @@ import org.bukkit.Chunk;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
+import java.nio.charset.StandardCharsets;
+
 public class ChunkPacketListener {
 
-    public final Y0Plugin plugin;
+    public final Y0Service plugin;
 
-    public ChunkPacketListener(Y0Plugin plugin) {
+    public ChunkPacketListener(Y0Service plugin) {
         this.plugin = plugin;
     }
 
@@ -19,7 +21,7 @@ public class ChunkPacketListener {
             return;
         }
 
-        plugin.getServer().getScheduler().runTask(plugin, () -> {
+        MultiLib.getScheduler().runTask(plugin, () -> {
             if (player.isOnline() && world.isChunkLoaded(chunkX, chunkZ)) {
                 Chunk chunk = world.getChunkAt(chunkX, chunkZ);
                 this.plugin.processAndSendChunk(player, chunk);

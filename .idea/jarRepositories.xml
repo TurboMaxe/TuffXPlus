@@ -66,5 +66,15 @@
       <option name="name" value="ParchmentMC" />
       <option name="url" value="https://maven.parchmentmc.org/" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="maven9" />
+      <option name="name" value="maven9" />
+      <option name="url" value="https://repo.clojars.org/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="maven10" />
+      <option name="name" value="maven10" />
+      <option name="url" value="https://repo.lucko.me/" />
+    </remote-repository>
   </component>
 </project>

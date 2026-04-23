@@ -37,6 +37,7 @@ public abstract class BaseInjector {
 
 				String targetHandler = null;
 				String[] anchors = {"packet_handler", "encoder", "via-encoder"};
+
                 for (String anchor : anchors) {
                     if (channel.pipeline().get(anchor) != null) {
                         targetHandler = anchor;

@@ -1,0 +1,130 @@
+package tf.tuff.services.viablocks;
+
+import com.github.puregero.multilib.MultiLib;
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import tf.tuff.services.viablocks.version.VersionAdapter;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+public class PaletteManager {
+    
+    ViaBlocksService plugin;
+
+    private final CopyOnWriteArrayList<String> palette = new CopyOnWriteArrayList<>();
+    private final Map<String, Integer> stateToIdMap = new ConcurrentHashMap<>();
+    private volatile List<String> paletteSnapshot;
+
+    public PaletteManager(VersionAdapter versionAdapter) {
+        plugin = ViaBlocksService.instance;
+        generate(versionAdapter);
+    }
+
+    private void generate(VersionAdapter versionAdapter) {
+        plugin.info("Generating ViaBlocks Pre-Defined Palette...");
+        
+        List<String> initialPalette = new ArrayList<>();
+        versionAdapter.getModernMaterials()
+            .stream()
+            .filter(Material::isBlock)
+            .forEach(
+                mat -> addEntryInternal(initialPalette, versionAdapter.getMaterialKey(mat)
+            ));
+        for (Material material : versionAdapter.getModernMaterials()) {
+            if (material.isBlock()) {
+                addEntryInternal(initialPalette, versionAdapter.getMaterialKey(material));
+            }
+        }
+
+        String[] thickness = {"tip", "frustum", "middle", "base"};
+        String[] direction = {"up", "down"};
+        String[] bools = {"true", "false"};
+        String[] facings = {"north", "south", "east", "west"};
+        String[] tilts = {"none", "unbalanced", "partial", "full"};
+
+        for (String d : direction) {
+            for (String t : thickness) {
+                for (String w : bools) {
+                    addEntryInternal(initialPalette, "minecraft:pointed_dripstone[thickness=" + t + ",vertical_direction=" + d + ",waterlogged=" + w + "]");
+                }
+            }
+        }
+
+        for (String f : facings) {
+            for (String t : tilts) {
+                for (String w : bools) {
+                    addEntryInternal(initialPalette, "minecraft:big_dripleaf[facing=" + f + ",tilt=" + t + ",waterlogged=" + w + "]");
+                }
+            }
+        }
+
+        for (String f : facings) {
+            for (String h : new String[]{"lower", "upper"}) {
+                addEntryInternal(initialPalette, "minecraft:small_dripleaf[facing=" + f + ",half=" + h + ",waterlogged=false]");
+            }
+        }
+        
+        for (String b : bools) {
+            addEntryInternal(initialPalette, "minecraft:cave_vines[age=0,berries=" + b + "]");
+            addEntryInternal(initialPalette, "minecraft:cave_vines_plant[berries=" + b + "]");
+        }
+
+        palette.addAll(initialPalette);
+        paletteSnapshot = new ArrayList<>(palette);
+        plugin.info("Palette initialized with " + palette.size() + " entries.");
+    }
+
+    private void addEntryInternal(List<String> localPalette, String state) {
+        if (!stateToIdMap.containsKey(state)) {
+            stateToIdMap.put(state, localPalette.size());
+            localPalette.add(state);
+        }
+    }
+
+    public int getOrCreateId(String state) {
+        Integer id = stateToIdMap.get(state);
+        if (id != null) {
+            return id;
+        }
+
+        synchronized (this) {
+             id = stateToIdMap.get(state);
+
+             int newId = palette.size();
+             palette.add(state);
+             stateToIdMap.put(state, newId);
+             paletteSnapshot = null;
+
+             broadcastNewPaletteEntry(state);
+             return id != null ? id : newId;
+        }
+    }
+
+    private void broadcastNewPaletteEntry(String state) {
+        if (plugin == null || !plugin.plugin.isEnabled() || !plugin.isEnabled()) return;
+        ByteArrayDataOutput out = ByteStreams.newDataOutput();
+        out.writeUTF("NEW_PALETTE_ENTRY");
+        out.writeUTF(state);
+
+        MultiLib.getGlobalRegionScheduler().run(plugin.plugin, t -> {
+            if (!plugin.plugin.isEnabled() || !plugin.isEnabled()) return;
+            Bukkit.getOnlinePlayers()
+                .stream()
+                .filter(player -> plugin.isPlayerEnabled(player))
+                .forEach(player ->
+                        player.sendPluginMessage(plugin.plugin, ViaBlocksService.CLIENTBOUND_CHANNEL, out.toByteArray())
+                );
+        });
+    }
+
+    public synchronized List<String> getPalette() {
+        List<String> snapshot = paletteSnapshot;
+        return snapshot == null ? new ArrayList<>(palette) : snapshot;
+    }
+}

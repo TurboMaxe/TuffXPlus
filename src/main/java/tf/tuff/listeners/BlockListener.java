@@ -13,52 +13,52 @@ public class BlockListener extends ListenerBase implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBlockForm(BlockFormEvent e) {
-        viaBlocksPlugin.blockListener.handleBlockForm(e);
+        viaBlocksService.blockListener.handleBlockForm(e);
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBlockFade(BlockFadeEvent e) {
-        viaBlocksPlugin.blockListener.handleBlockFade(e);
+        viaBlocksService.blockListener.handleBlockFade(e);
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBlockSpread(BlockSpreadEvent e) {
-        viaBlocksPlugin.blockListener.handleBlockSpread(e);
+        viaBlocksService.blockListener.handleBlockSpread(e);
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent e) {
-        viaBlocksPlugin.blockListener.handleBlockBreak(e);
-        y0Plugin.handleBlockBreak(e);
+        viaBlocksService.blockListener.handleBlockBreak(e);
+        y0Service.handleBlockBreak(e);
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBlockGrow(BlockGrowEvent e) {
-        viaBlocksPlugin.blockListener.handleBlockGrow(e);
+        viaBlocksService.blockListener.handleBlockGrow(e);
     }
 
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent e) {
-        viaBlocksPlugin.blockListener.handleBlockPlace(e);
-        y0Plugin.handleBlockPlace(e);
+        viaBlocksService.blockListener.handleBlockPlace(e);
+        y0Service.handleBlockPlace(e);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockPhysics(BlockPhysicsEvent e) {
-        y0Plugin.handleBlockPhysics(e);
-        viaBlocksPlugin.blockListener.handleBlockPhysics(e);
+        y0Service.handleBlockPhysics(e);
+        viaBlocksService.blockListener.handleBlockPhysics(e);
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBlockExplode(BlockExplodeEvent e) {
-        viaBlocksPlugin.blockListener.handleBlockExplode(e);
-        y0Plugin.handleBlockExplode(e);
+        viaBlocksService.blockListener.handleBlockExplode(e);
+        y0Service.handleBlockExplode(e);
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBlockFromTo(BlockFromToEvent e) {
-        viaBlocksPlugin.blockListener.handleBlockFromTo(e);
-        y0Plugin.handleBlockFromTo(e);
+        viaBlocksService.blockListener.handleBlockFromTo(e);
+        y0Service.handleBlockFromTo(e);
     }
 }

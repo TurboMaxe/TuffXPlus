@@ -1,4 +1,24 @@
-package tf.tuff.viablocks;
+package tf.tuff.services.viablocks;
+
+import lombok.Getter;
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
+import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BookMeta;
+import tf.tuff.TuffX;
+import tf.tuff.services.ServiceBase;
+import tf.tuff.services.viablocks.version.VersionAdapter;
+import tf.tuff.services.viablocks.version.modern.ModernAdapter;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,34 +30,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 
-import org.bukkit.Material;
-import org.bukkit.World;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.BookMeta;
-
-import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.TextComponent;
-
-import tf.tuff.viablocks.version.VersionAdapter;
-import tf.tuff.viablocks.version.modern.ModernAdapter;
-import tf.tuff.TuffX;
-
-public final class ViaBlocksPlugin {
+public final class ViaBlocksService implements ServiceBase {
 
     public static final String CLIENTBOUND_CHANNEL = "viablocks:data";
     public static final String SERVERBOUND_CHANNEL = "viablocks:handshake";
 
     public final Set<UUID> viaBlocksEnabledPlayers = new HashSet<>();
     public CustomBlockListener blockListener;
-    static ViaBlocksPlugin instance;
+    static ViaBlocksService instance;
 
     private File playerDataFile;
     private FileConfiguration playerDataConfig;
@@ -49,14 +49,16 @@ public final class ViaBlocksPlugin {
 
     public VersionAdapter versionAdapter;
 
+    @Getter
     public PaletteManager paletteManager;
+    @Getter
     private long updateBatchDelayTicks = 1L;
     public ExecutorService chunkExecutor;
     public boolean isPaper = false;
 
     public TuffX plugin;
 
-    public ViaBlocksPlugin(TuffX plugin){
+    ViaBlocksService(TuffX plugin){
         this.plugin = plugin;
     }   
 
@@ -78,6 +80,10 @@ public final class ViaBlocksPlugin {
         }
         
         info("ViaBlocks reloaded.");
+    }
+
+    public static ViaBlocksService invoke() {
+        return new ViaBlocksService(TuffX.getInstance());
     }
 
     public void onTuffXEnable() {
@@ -118,23 +124,12 @@ public final class ViaBlocksPlugin {
         }
     }
 
-    public PaletteManager getPaletteManager() {
-        return this.paletteManager;
-    }
-
-    public long getUpdateBatchDelayTicks() {
-        return this.updateBatchDelayTicks;
-    }
-
     private void loadSyncSettings() {
         enabled = plugin.getConfig().getBoolean("viablocks.viablocks-enabled", false);
         debug = plugin.getConfig().getBoolean("viablocks.debug", false);
         sendWelcomeBook = plugin.getConfig().getBoolean("viablocks.send-welcome-book", true);
 
         String mode = plugin.getConfig().getString("viablocks.sync-mode", "normal");
-        if (mode == null) {
-            mode = "normal";
-        }
         this.updateBatchDelayTicks = mode.equalsIgnoreCase("reduced") ? 10L : 1L;
     }
 
@@ -153,7 +148,7 @@ public final class ViaBlocksPlugin {
         playerDataFile = new File(plugin.getDataFolder(), "players.yml");
         if (!playerDataFile.exists()) {
             try {
-                playerDataFile.createNewFile();
+                if (!playerDataFile.createNewFile()) severe("Could not create players.yml!");
             } catch (IOException e) {
                 severe("Could not create players.yml!");
                 e.printStackTrace();

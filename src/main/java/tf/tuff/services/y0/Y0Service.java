@@ -1,17 +1,13 @@
-package tf.tuff.y0;
+package tf.tuff.services.y0;
 
-import java.io.*;
-import java.lang.reflect.Method;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.*;
-import java.util.function.Consumer;
-import java.util.logging.Level;
-import javax.annotation.Nonnull;
-
+import com.github.retrooper.packetevents.PacketEvents;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import lombok.Setter;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Chunk;
 import org.bukkit.ChunkSnapshot;
 import org.bukkit.Location;
@@ -20,22 +16,37 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
-import org.bukkit.event.block.*;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockExplodeEvent;
+import org.bukkit.event.block.BlockFromToEvent;
+import org.bukkit.event.block.BlockPhysicsEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-
-import com.github.retrooper.packetevents.PacketEvents;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-
 import tf.tuff.TuffX;
+import tf.tuff.services.ServiceBase;
 
-public class Y0Plugin {
+import javax.annotation.Nonnull;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.logging.Level;
+
+public class Y0Service implements ServiceBase {
 
     public static final String CH = "eagler:below_y0";
     public ViaBlockIds v;
@@ -59,6 +70,7 @@ public class Y0Plugin {
     private static Method getLightEmissionMethod;
 
     public ChunkPacketListener cpl;
+    @Setter
     private tf.tuff.netty.ChunkInjector chunkInjector;
 
     static {
@@ -91,7 +103,7 @@ public class Y0Plugin {
             Map.entry(Material.CANDLE_CAKE, 3)
     );
 
-    public Y0Plugin(TuffX plugin){
+    protected Y0Service(TuffX plugin){
         this.plugin = plugin;
     }
 
@@ -173,6 +185,10 @@ public class Y0Plugin {
         emissionCache.clear();
 
         info("Y0 reloaded.");
+    }
+
+    public static Y0Service invoke() {
+        return new Y0Service(TuffX.getInstance());
     }
 
     public void onTuffXEnable() {
@@ -264,10 +280,6 @@ public class Y0Plugin {
         return aib.contains(p.getUniqueId());
     }
 
-    public void setChunkInjector(tf.tuff.netty.ChunkInjector injector) {
-        this.chunkInjector = injector;
-    }
-
     public void handlePacket(Player p, byte[] m) {
         try (DataInputStream i = new DataInputStream(new ByteArrayInputStream(m))) {
             int x = i.readInt();
@@ -305,12 +317,15 @@ public class Y0Plugin {
                     p.sendPluginMessage(plugin, CH, cby0sp(false));
                 }
                 break;
-            case "use_on_block":
-                break;
             case "ready":
                 if (plugin.getConfig().getBoolean("y0.kick-outdated-clients", true)){
-                    p.kickPlayer("§cYour client is not compatible with the version of §6TuffX §cthe server has installed!\n§7Please update your client.");
+                    p.kick(LegacyComponentSerializer.legacyAmpersand()
+                        .deserialize(
+                                "&cYour client is not compatible with the version of &6TuffX &cthe server has installed!\n&7Please update your client.")
+                        );
                 }
+            case "default":
+                break;
         }
     }
 
@@ -517,13 +532,12 @@ public class Y0Plugin {
     private byte[] buildCombined(ObjectArrayList<byte[]> sections) {
         if (sections.isEmpty()) return null;
         int totalLen = 0;
-        for (int i = 0, l = sections.size(); i < l; i++) {
-            totalLen += sections.get(i).length;
+        for (byte[] section : sections) {
+            totalLen += section.length;
         }
         byte[] result = new byte[totalLen];
         int offset = 0;
-        for (int i = 0, l = sections.size(); i < l; i++) {
-            byte[] s = sections.get(i);
+        for (byte[] s : sections) {
             System.arraycopy(s, 0, result, offset, s.length);
             offset += s.length;
         }
@@ -817,7 +831,7 @@ public class Y0Plugin {
         if (getLightEmissionMethod != null) {
             try {
                 return (int) getLightEmissionMethod.invoke(data);
-            } catch (Exception e) {}
+            } catch (Exception ignored) {}
         }
         return legacy_light_map.getOrDefault(data.getMaterial(), 0);
     }

@@ -2,20 +2,20 @@ package tf.tuff.listeners;
 
 import tf.tuff.TuffX;
 import tf.tuff.tuffactions.TuffActions;
-import tf.tuff.viablocks.ViaBlocksPlugin;
-import tf.tuff.viaentities.ViaEntitiesPlugin;
-import tf.tuff.y0.Y0Plugin;
+import tf.tuff.services.viablocks.ViaBlocksService;
+import tf.tuff.viaentities.ViaEntitiesService;
+import tf.tuff.services.y0.Y0Service;
 
 public abstract class ListenerBase {
-    protected final ViaBlocksPlugin viaBlocksPlugin;
+    protected final ViaBlocksService viaBlocksService;
     protected final TuffActions tuffActions;
-    protected final ViaEntitiesPlugin viaEntitiesPlugin;
-    protected final Y0Plugin y0Plugin;
+    protected final ViaEntitiesService viaEntitiesService;
+    protected final Y0Service y0Service;
 
     public ListenerBase() {
-        viaBlocksPlugin = TuffX.getInstance().getViaBlocksPlugin();
+        viaBlocksService = TuffX.getInstance().getViaBlocksService();
         tuffActions = TuffX.getInstance().getTuffActions();
-        viaEntitiesPlugin = TuffX.getInstance().getViaEntitiesPlugin();
-        y0Plugin = TuffX.getInstance().getY0Plugin();
+        viaEntitiesService = TuffX.getInstance().getViaEntitiesService();
+        y0Service = TuffX.getInstance().getY0Service();
     }
 }

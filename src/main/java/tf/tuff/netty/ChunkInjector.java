@@ -4,17 +4,17 @@ import com.viaversion.viaversion.api.Via;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import org.bukkit.entity.Player;
-import tf.tuff.viablocks.CustomBlockListener;
-import tf.tuff.y0.Y0Plugin;
+import tf.tuff.services.viablocks.CustomBlockListener;
+import tf.tuff.services.y0.Y0Service;
 
 import java.util.UUID;
 
 public class ChunkInjector extends BaseInjector {
 
 	private final CustomBlockListener viaBlocks;
-	private final Y0Plugin y0;
+	private final Y0Service y0;
 
-	public ChunkInjector(CustomBlockListener viaBlocks, Y0Plugin y0) {
+	public ChunkInjector(CustomBlockListener viaBlocks, Y0Service y0) {
 		super("tuff_chunk_handler");
 		this.viaBlocks = viaBlocks;
 		this.y0 = y0;

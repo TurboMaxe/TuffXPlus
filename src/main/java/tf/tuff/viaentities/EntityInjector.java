@@ -7,9 +7,9 @@ import tf.tuff.netty.BaseInjector;
 
 public class EntityInjector extends BaseInjector {
 
-	private final ViaEntitiesPlugin plugin;
+	private final ViaEntitiesService plugin;
 
-	public EntityInjector(ViaEntitiesPlugin plugin) {
+	public EntityInjector(ViaEntitiesService plugin) {
 		super("viaentities_handler");
 		this.plugin = plugin;
 	}
@@ -44,7 +44,7 @@ public class EntityInjector extends BaseInjector {
 	}
 
 	public void sendEntityData(Player player, int entityId, String entityType, Entity entity) {
-		if (!plugin.isPlayerEnabled(player.getUniqueId())) return;
+		if (plugin.isPlayerEnabled(player.getUniqueId())) return;
 
 		int paletteIndex = plugin.entityMappingManager.getEntityIndex(entityType);
 		if (paletteIndex == -1) return;
@@ -59,6 +59,6 @@ public class EntityInjector extends BaseInjector {
 		out.writeFloat(entity.getLocation().getYaw());
 		out.writeFloat(entity.getLocation().getPitch());
 
-		player.sendPluginMessage(plugin.plugin, ViaEntitiesPlugin.CLIENTBOUND_CHANNEL, out.toByteArray());
+		player.sendPluginMessage(plugin.plugin, ViaEntitiesService.CLIENTBOUND_CHANNEL, out.toByteArray());
 	}
 }

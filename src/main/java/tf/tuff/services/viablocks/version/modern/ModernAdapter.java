@@ -1,6 +1,6 @@
-package tf.tuff.viablocks.version.modern;
+package tf.tuff.services.viablocks.version.modern;
 
-import tf.tuff.viablocks.version.VersionAdapter;
+import tf.tuff.services.viablocks.version.VersionAdapter;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -8,7 +8,7 @@ import org.bukkit.inventory.ItemStack;
 import java.lang.reflect.Method;
 import java.util.EnumSet;
 
-public class ModernAdapter implements VersionAdapter {
+public class ModernAdapter extends VersionAdapter {
 
     private static final String[] MODERN_MATERIAL_NAMES = {
             "TUBE_CORAL",

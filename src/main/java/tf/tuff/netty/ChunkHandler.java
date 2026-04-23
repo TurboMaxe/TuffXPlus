@@ -7,8 +7,8 @@ import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import tf.tuff.viablocks.CustomBlockListener;
-import tf.tuff.y0.Y0Plugin;
+import tf.tuff.services.viablocks.CustomBlockListener;
+import tf.tuff.services.y0.Y0Service;
 
 import java.util.Map;
 import java.util.UUID;
@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 public class ChunkHandler extends ChannelOutboundHandlerAdapter {
 
     private final CustomBlockListener viaBlocks;
-    private final Y0Plugin y0;
+    private final Y0Service y0;
     private final Player player;
     private final UUID playerId;
     private final Map<Long, QueuedPacket> queue = new ConcurrentHashMap<>();
@@ -26,7 +26,7 @@ public class ChunkHandler extends ChannelOutboundHandlerAdapter {
 
     private static final long TIMEOUT_MS = 500;
 
-    public ChunkHandler(CustomBlockListener viaBlocks, Y0Plugin y0, Player player) {
+    public ChunkHandler(CustomBlockListener viaBlocks, Y0Service y0, Player player) {
         this.viaBlocks = viaBlocks;
         this.y0 = y0;
         this.player = player;
@@ -60,35 +60,31 @@ public class ChunkHandler extends ChannelOutboundHandlerAdapter {
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-        if (!(msg instanceof ByteBuf)) {
+        if (!(msg instanceof ByteBuf buf)) {
             super.write(ctx, msg, promise);
             return;
         }
 
-        ByteBuf buf = (ByteBuf) msg;
         buf.markReaderIndex();
 
         try {
             int packetId = readVarInt(buf);
-
-            if (packetId == 0x20) {
-                handleChunkPacket(ctx, buf, promise);
-                return;
+            switch (packetId) {
+                case 0x20 -> {
+                    handleChunkPacket(ctx, buf, promise);
+                    return;
+                }
+                case 0x0B -> {
+                    if (viaBlocks != null)
+                        handleBlockChange(ctx, buf, promise);
+                }
+                case 0x10 -> {
+                    if (viaBlocks != null)
+                        handleMultiBlockChange(ctx, buf, promise);
+                }
             }
-
-            if (packetId == 0x0B && viaBlocks != null) {
-                handleBlockChange(ctx, buf, promise);
-                return;
-            }
-
-            if (packetId == 0x10 && viaBlocks != null) {
-                handleMultiBlockChange(ctx, buf, promise);
-                return;
-            }
-
-        } catch (Exception e) {
-        } finally {
-            if (buf.refCnt() > 0 && msg == buf) {
+        } catch (Exception ignored) {} finally {
+            if (buf.refCnt() > 0) {
                 buf.resetReaderIndex();
             }
         }
@@ -123,10 +119,10 @@ public class ChunkHandler extends ChannelOutboundHandlerAdapter {
         q.y0Data = y0Data;
         queue.put(key, q);
 
-        if (!viaReady && viaBlocks != null) {
+        if (!viaReady) {
             requestViaCache(chunkX, chunkZ, key);
         }
-        if (!y0Ready && y0 != null) {
+        if (!y0Ready) {
             requestY0Cache(chunkX, chunkZ, key);
         }
 
@@ -322,11 +318,10 @@ public class ChunkHandler extends ChannelOutboundHandlerAdapter {
 
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) {
-        for (QueuedPacket q : queue.values()) {
-            if (q.buf.refCnt() > 0) {
-                q.buf.release();
-            }
-        }
+        queue.values()
+            .stream()
+            .filter(q -> q.buf.refCnt() > 0)
+            .forEach(q -> q.buf.release());
         queue.clear();
     }
 }

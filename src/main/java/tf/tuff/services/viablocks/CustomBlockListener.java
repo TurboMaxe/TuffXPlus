@@ -1,5 +1,6 @@
-package tf.tuff.viablocks;
+package tf.tuff.services.viablocks;
 
+import com.github.puregero.multilib.MultiLib;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.io.ByteArrayDataOutput;
@@ -26,7 +27,8 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.BlockSpreadEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
-import tf.tuff.viablocks.version.VersionAdapter;
+import org.jetbrains.annotations.NotNull;
+import tf.tuff.services.viablocks.version.VersionAdapter;
 
 import javax.annotation.Nonnull;
 import java.lang.reflect.Method;
@@ -45,7 +47,7 @@ import java.util.function.Consumer;
 
 public class CustomBlockListener {
 
-    public final ViaBlocksPlugin plugin;
+    public final ViaBlocksService plugin;
     private final VersionAdapter versionAdapter;
     private final PaletteManager paletteManager;
     private final EnumSet<Material> modernMaterials;
@@ -68,7 +70,7 @@ public class CustomBlockListener {
 
     private final Cache<Long, Integer> recentModernChanges;
 
-    public CustomBlockListener(ViaBlocksPlugin plugin, VersionAdapter versionAdapter, PaletteManager paletteManager) {
+    public CustomBlockListener(ViaBlocksService plugin, VersionAdapter versionAdapter, PaletteManager paletteManager) {
         this.plugin = plugin;
         this.versionAdapter = versionAdapter;
         this.paletteManager = paletteManager;
@@ -160,13 +162,13 @@ public class CustomBlockListener {
             int[] chunk = chunks.get(i);
             byte[] data = getExtraDataForChunk(worldName, chunk[0], chunk[1]);
             if (data != null && data.length > 0) {
-                player.sendPluginMessage(plugin.plugin, ViaBlocksPlugin.CLIENTBOUND_CHANNEL, data);
+                player.sendPluginMessage(plugin.plugin, ViaBlocksService.CLIENTBOUND_CHANNEL, data);
             }
         }
 
         if (endIndex < chunks.size()) {
             final int nextStart = endIndex;
-            runSyncLater(() -> sendChunksBatched(player, worldName, chunks, nextStart), 1);
+            MultiLib.getGlobalRegionScheduler().runDelayed(plugin.plugin, t -> sendChunksBatched(player, worldName, chunks, nextStart), 1);
         }
     }
 
@@ -491,27 +493,24 @@ public class CustomBlockListener {
         if (stateId == -1) return;
 
         World world = location.getWorld();
-        for (Player player : world.getPlayers()) {
-            if (plugin.isPlayerEnabled(player) && player.getLocation().distanceSquared(location) < UPDATE_RADIUS_SQUARED) {
-                sendPacket(player, stateId, location);
-            }
-        }
+        world.getPlayers().stream()
+            .filter(plugin::isPlayerEnabled)
+            .filter(p -> p.getLocation().distanceSquared(location) < UPDATE_RADIUS_SQUARED)
+            .forEach(p -> sendPacket(p, stateId, location));
     }
 
     private void sendClearUpdateToNearbyPlayers(Location location) {
         if (!plugin.isEnabled() || plugin.viaBlocksEnabledPlayers.isEmpty() || location.getWorld() == null) return;
         final int AIR_ID = 0;
         World world = location.getWorld();
-        
-        for (Player player : world.getPlayers()) {
-            if (plugin.isPlayerEnabled(player) && player.getLocation().distanceSquared(location) < UPDATE_RADIUS_SQUARED) {
-                sendPacket(player, AIR_ID, location);
-            }
-        }
+
+        world.getPlayers().stream()
+                .filter(plugin::isPlayerEnabled)
+                .filter(p -> p.getLocation().distanceSquared(location) < UPDATE_RADIUS_SQUARED)
+                .forEach(p -> sendPacket(p, AIR_ID, location));
     }
 
-    private void invalidateChunkCache(Chunk chunk) {
-        if (chunk == null) return;
+    private void invalidateChunkCache(@NotNull Chunk chunk) {
         chunkPacketCache.invalidate(chunkKey(chunk.getWorld().getName(), chunk.getX(), chunk.getZ()));
     }
 
@@ -522,7 +521,7 @@ public class CustomBlockListener {
         List<Long> stateList = updateData.computeIfAbsent(stateId, k -> new ArrayList<>());
         stateList.add(packLocation(location));
         if (pendingFlush.add(playerId)) {
-            runSyncLater(() -> flushPendingUpdates(playerId), plugin.getUpdateBatchDelayTicks());
+            MultiLib.getGlobalRegionScheduler().runDelayed(plugin.plugin, t -> flushPendingUpdates(playerId), plugin.getUpdateBatchDelayTicks());
         }
     }
 
@@ -535,7 +534,7 @@ public class CustomBlockListener {
         if (player == null || !player.isOnline()) return;
 
         byte[] packetData = buildChunkPacket(updateData);
-        player.sendPluginMessage(plugin.plugin, ViaBlocksPlugin.CLIENTBOUND_CHANNEL, packetData);
+        player.sendPluginMessage(plugin.plugin, ViaBlocksService.CLIENTBOUND_CHANNEL, packetData);
     }
 
     private int getMaterialId(BlockData data) {
@@ -565,7 +564,7 @@ public class CustomBlockListener {
         List<String> palette = this.paletteManager.getPalette();
         out.writeInt(palette.size());
         palette.forEach(out::writeUTF);
-        player.sendPluginMessage(plugin.plugin, ViaBlocksPlugin.CLIENTBOUND_CHANNEL, out.toByteArray());
+        player.sendPluginMessage(plugin.plugin, ViaBlocksService.CLIENTBOUND_CHANNEL, out.toByteArray());
     }
     
     public boolean isModernMaterial(Material material) {
@@ -578,7 +577,7 @@ public class CustomBlockListener {
         prepareChunkCache(chunk);
         byte[] data = getExtraDataForChunk(chunk.getWorld().getName(), chunk.getX(), chunk.getZ());
         if (data != null && data.length > 0) {
-            player.sendPluginMessage(plugin.plugin, ViaBlocksPlugin.CLIENTBOUND_CHANNEL, data);
+            player.sendPluginMessage(plugin.plugin, ViaBlocksService.CLIENTBOUND_CHANNEL, data);
         }
     }
 
@@ -588,13 +587,6 @@ public class CustomBlockListener {
         pendingFlush.clear();
         chunkPacketCache.invalidateAll();
         recentModernChanges.invalidateAll();
-    }
-
-    private void runSyncLater(Runnable task, long delay) { 
-        if (!plugin.plugin.isEnabled()) return;
-        try {
-            plugin.plugin.getServer().getScheduler().runTaskLater(plugin.plugin, task, delay); 
-        } catch (Exception ignored) {}
     }
 
     private int getMinHeight(World world) {

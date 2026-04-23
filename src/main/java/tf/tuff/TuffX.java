@@ -14,10 +14,13 @@ import org.jetbrains.annotations.NotNull;
 import tf.tuff.listeners.BlockListener;
 import tf.tuff.listeners.PlayerListener;
 import tf.tuff.netty.ChunkInjector;
+import tf.tuff.networking.NetworkListener;
+import tf.tuff.networking.ServerRegistry;
+import tf.tuff.services.ServiceBase;
+import tf.tuff.services.viablocks.ViaBlocksService;
+import tf.tuff.services.y0.Y0Service;
 import tf.tuff.tuffactions.TuffActions;
-import tf.tuff.viablocks.ViaBlocksPlugin;
-import tf.tuff.viaentities.ViaEntitiesPlugin;
-import tf.tuff.y0.Y0Plugin;
+import tf.tuff.viaentities.ViaEntitiesService;
 
 import java.util.List;
 
@@ -25,10 +28,11 @@ public final class TuffX extends JavaPlugin implements PluginMessageListener {
 
     private ServerRegistry serverRegistry;
     @Getter private static TuffX instance;
-    @Getter private Y0Plugin y0Plugin;
-    @Getter private ViaBlocksPlugin viaBlocksPlugin;
+    @Getter private Y0Service y0Service;
+    @Getter private ViaBlocksService viaBlocksService;
     @Getter private TuffActions tuffActions;
-    @Getter private ViaEntitiesPlugin viaEntitiesPlugin;
+    @Getter private ViaEntitiesService viaEntitiesService;
+    private List<ServiceBase> services;
 
     public TuffX() {
         instance = this;
@@ -36,29 +40,30 @@ public final class TuffX extends JavaPlugin implements PluginMessageListener {
 
     @Override
     public void onLoad() {
-        y0Plugin = new Y0Plugin(this);
-        this.viaBlocksPlugin = new ViaBlocksPlugin(this);
+        y0Service = Y0Service.invoke();
+        this.viaBlocksService = ViaBlocksService.invoke();
         this.tuffActions = new TuffActions(this);
-        this.viaEntitiesPlugin = new ViaEntitiesPlugin(this);
+        this.viaEntitiesService = new ViaEntitiesService(this);
+        services = List.of(
+                    y0Service,
+                    viaBlocksService,
+                    viaEntitiesService
+                   );
 
         PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this));
         PacketEvents.getAPI().getSettings().reEncodeByDefault(false)
-                .checkForUpdates(false);
+            .checkForUpdates(false);
         PacketEvents.getAPI().load();
     }
 
     @Override
     public void onEnable() {
         PacketEvents.getAPI().init();
-
-        y0Plugin.onTuffXEnable();
+        services.forEach(ServiceBase::onTuffXEnable);
         tuffActions.load();
-        viaBlocksPlugin.onTuffXEnable();
-        viaEntitiesPlugin.onTuffXEnable();
-
-        ChunkInjector chunkInjector = new ChunkInjector(viaBlocksPlugin.blockListener, y0Plugin);
-        viaBlocksPlugin.blockListener.setChunkInjector(chunkInjector);
-        y0Plugin.setChunkInjector(chunkInjector);
+        ChunkInjector chunkInjector = new ChunkInjector(viaBlocksService.blockListener, y0Service);
+        viaBlocksService.blockListener.setChunkInjector(chunkInjector);
+        y0Service.setChunkInjector(chunkInjector);
 
         saveDefaultConfig();
         PacketEvents.getAPI().getEventManager().registerListener(
@@ -105,9 +110,9 @@ public final class TuffX extends JavaPlugin implements PluginMessageListener {
 
     @Override
     public void onDisable() {
-        y0Plugin.onTuffXDisable();
-        viaBlocksPlugin.onTuffXDisable();
-        viaEntitiesPlugin.onTuffXDisable();
+        y0Service.onTuffXDisable();
+        viaBlocksService.onTuffXDisable();
+        viaEntitiesService.onTuffXDisable();
 
         if (serverRegistry != null) {
             serverRegistry.disconnect();
@@ -122,10 +127,10 @@ public final class TuffX extends JavaPlugin implements PluginMessageListener {
         if (!player.isOnline()) return;
 
         switch (channel) {
-            case "eagler:below_y0" -> y0Plugin.handlePacket(player, message);
-            case "viablocks:handshake" -> viaBlocksPlugin.handlePacket(player, message);
+            case "eagler:below_y0" -> y0Service.handlePacket(player, message);
+            case "viablocks:handshake" -> viaBlocksService.handlePacket(player, message);
             case "eagler:tuffactions" -> tuffActions.handlePacket(player, message);
-            case "entities:handshake" -> viaEntitiesPlugin.handlePacket(player, message);
+            case "entities:handshake" -> viaEntitiesService.handlePacket(player, message);
             default ->
                getLogger().warning("Received plugin message on unknown channel '%s' from %s".formatted(channel, player.getName()));
         }
@@ -141,10 +146,10 @@ public final class TuffX extends JavaPlugin implements PluginMessageListener {
         }
 
         setupRegistry();
-        viaBlocksPlugin.onTuffXReload();
-        y0Plugin.onTuffXReload();
+        viaBlocksService.onTuffXReload();
+        y0Service.onTuffXReload();
         tuffActions.onTuffXReload();
-        viaEntitiesPlugin.onTuffXReload();
+        viaEntitiesService.onTuffXReload();
         getLogger().info("TuffX reloaded.");
     }
 
@@ -169,7 +174,7 @@ public final class TuffX extends JavaPlugin implements PluginMessageListener {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, Command command, @NotNull String label, String @NotNull [] args) {
         if (command.getName().equalsIgnoreCase("tuffx")) return TuffXCommand(sender, command, label, args);
-        if (command.getName().equalsIgnoreCase("viablocks")) return viaBlocksPlugin.onTuffXCommand(sender, command, label, args);
+        if (command.getName().equalsIgnoreCase("viablocks")) return viaBlocksService.onTuffXCommand(sender, command, label, args);
         if (command.getName().equalsIgnoreCase("restrictions")) return tuffActions.onTuffXCommand(sender, command, label, args);
         return true;
     }

@@ -1,10 +1,11 @@
-package tf.tuff;
+package tf.tuff.networking;
 
 import com.github.retrooper.packetevents.event.PacketListener;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerChunkData;
 import org.bukkit.entity.Player;
+import tf.tuff.TuffX;
 
 public class NetworkListener implements PacketListener {
 
@@ -21,7 +22,7 @@ public class NetworkListener implements PacketListener {
         Player player = event.getPlayer();
         WrapperPlayServerChunkData wrapper = new WrapperPlayServerChunkData(event);
 
-        plugin.getY0Plugin().cpl
+        plugin.getY0Service().cpl
                 .handleChunk(plugin,
                         player,
                         player.getWorld(),

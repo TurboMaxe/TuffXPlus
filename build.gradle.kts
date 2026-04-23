@@ -20,6 +20,8 @@ repositories {
     maven("https://jitpack.io")
     maven("https://repo.dmulloy2.net/repository/public/")
     maven("https://repo.codemc.io/repository/maven-releases/")
+    maven("https://repo.clojars.org/")
+    maven("https://repo.lucko.me/")
 }
 
 dependencies {
@@ -31,8 +33,9 @@ dependencies {
     compileOnly(libs.fastutil)
     implementation(libs.jackson.databind)
     compileOnly(libs.netty.all)
-    implementation(libs.java.websocket)
-
+    implementation(libs.multilib)
+    compileOnly(libs.websocket.nv)
+    implementation(libs.lucko)
     compileOnly(libs.lombok)
     annotationProcessor(libs.lombok) 
 }

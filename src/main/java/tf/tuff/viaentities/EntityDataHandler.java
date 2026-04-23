@@ -11,11 +11,11 @@ import java.util.List;
 
 public class EntityDataHandler extends ChannelOutboundHandlerAdapter {
 
-    private final ViaEntitiesPlugin plugin;
+    private final ViaEntitiesService plugin;
     private final Player player;
     private final EntityMappingManager entityMappingManager;
 
-    public EntityDataHandler(ViaEntitiesPlugin plugin, Player player) {
+    public EntityDataHandler(ViaEntitiesService plugin, Player player) {
         this.plugin = plugin;
         this.player = player;
         this.entityMappingManager = plugin.entityMappingManager;
@@ -302,7 +302,7 @@ public class EntityDataHandler extends ChannelOutboundHandlerAdapter {
     }
 
     private void sendEntitySpawn(int entityId, String entityType, double x, double y, double z, float yaw, float pitch) {
-        if (!plugin.isPlayerEnabled(player.getUniqueId())) return;
+        if (plugin.isPlayerEnabled(player.getUniqueId())) return;
 
         int paletteIndex = entityMappingManager.getEntityIndex(entityType);
         if (paletteIndex == -1) return;
@@ -318,11 +318,11 @@ public class EntityDataHandler extends ChannelOutboundHandlerAdapter {
         out.writeFloat(pitch);
 
         byte[] data = out.toByteArray();
-        player.sendPluginMessage(plugin.plugin, ViaEntitiesPlugin.CLIENTBOUND_CHANNEL, data);
+        player.sendPluginMessage(plugin.plugin, ViaEntitiesService.CLIENTBOUND_CHANNEL, data);
     }
 
     private void sendEntityMetadata(int entityId, Object packedItems) {
-        if (!plugin.isPlayerEnabled(player.getUniqueId())) return;
+        if (plugin.isPlayerEnabled(player.getUniqueId())) return;
 
         try {
             ByteArrayDataOutput out = ByteStreams.newDataOutput();
@@ -369,13 +369,13 @@ public class EntityDataHandler extends ChannelOutboundHandlerAdapter {
             }
 
             byte[] data = out.toByteArray();
-            player.sendPluginMessage(plugin.plugin, ViaEntitiesPlugin.CLIENTBOUND_CHANNEL, data);
+            player.sendPluginMessage(plugin.plugin, ViaEntitiesService.CLIENTBOUND_CHANNEL, data);
         } catch (Exception ignored) {
         }
     }
 
     private void sendEntityAnimation(int entityId, int animationType) {
-        if (!plugin.isPlayerEnabled(player.getUniqueId())) return;
+        if (plugin.isPlayerEnabled(player.getUniqueId())) return;
 
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
         out.writeUTF("ENTITY_ANIMATION");
@@ -383,17 +383,17 @@ public class EntityDataHandler extends ChannelOutboundHandlerAdapter {
         out.writeInt(animationType);
 
         byte[] data = out.toByteArray();
-        player.sendPluginMessage(plugin.plugin, ViaEntitiesPlugin.CLIENTBOUND_CHANNEL, data);
+        player.sendPluginMessage(plugin.plugin, ViaEntitiesService.CLIENTBOUND_CHANNEL, data);
     }
 
     private void sendEntityDestroy(int entityId) {
-        if (!plugin.isPlayerEnabled(player.getUniqueId())) return;
+        if (plugin.isPlayerEnabled(player.getUniqueId())) return;
 
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
         out.writeUTF("DESTROY_ENTITY");
         out.writeInt(entityId);
 
         byte[] data = out.toByteArray();
-        player.sendPluginMessage(plugin.plugin, ViaEntitiesPlugin.CLIENTBOUND_CHANNEL, data);
+        player.sendPluginMessage(plugin.plugin, ViaEntitiesService.CLIENTBOUND_CHANNEL, data);
     }
 }

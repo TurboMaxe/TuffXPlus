@@ -1,31 +1,36 @@
 package tf.tuff.viaentities;
 
+import lombok.Getter;
 import tf.tuff.TuffX;
 import org.bukkit.entity.Player;
+import tf.tuff.services.ServiceBase;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 
-public final class ViaEntitiesPlugin {
+public final class ViaEntitiesService implements ServiceBase {
 
     public static final String CLIENTBOUND_CHANNEL = "viaentities:data";
     public static final String SERVERBOUND_CHANNEL = "entities:handshake";
 
     public final Set<UUID> viaEntitiesEnabledPlayers = new HashSet<>();
 
-    static ViaEntitiesPlugin instance;
+    static ViaEntitiesService instance;
 
     public EntityMappingManager entityMappingManager;
     private EntityInjector entityInjector;
+    @Getter
     private boolean enabled = true;
+    @Getter
     private boolean debug = false;
+    @Getter
     private int maxDistance = -1;
 
     public TuffX plugin;
 
-    public ViaEntitiesPlugin(TuffX plugin) {
+    public ViaEntitiesService(TuffX plugin) {
         this.plugin = plugin;
     }
 
@@ -37,10 +42,6 @@ public final class ViaEntitiesPlugin {
         enabled = plugin.getConfig().getBoolean("viaentities.viaentities-enabled", true);
         debug = plugin.getConfig().getBoolean("viaentities.debug", true);
         maxDistance = plugin.getConfig().getInt("viaentities.max-distance", -1);
-    }
-
-    public boolean isDebug() {
-        return debug;
     }
 
     public void debug(String message) {
@@ -72,17 +73,9 @@ public final class ViaEntitiesPlugin {
         }
     }
 
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public int getMaxDistance() {
-        return maxDistance;
-    }
-
     public void handlePacket(Player player, byte[] message) {
         if (!enabled) return;
-        if (!isPlayerEnabled(player.getUniqueId())) {
+        if (isPlayerEnabled(player.getUniqueId())) {
             debug("Received handshake from " + player.getName());
             setPlayerEnabled(player.getUniqueId(), true);
             entityInjector.inject(player);
@@ -116,7 +109,7 @@ public final class ViaEntitiesPlugin {
     }
 
     public boolean isPlayerEnabled(UUID playerId) {
-        return viaEntitiesEnabledPlayers.contains(playerId);
+        return !viaEntitiesEnabledPlayers.contains(playerId);
     }
 
     public void setPlayerEnabled(UUID playerId, boolean enabled) {
@@ -127,7 +120,4 @@ public final class ViaEntitiesPlugin {
         }
     }
 
-    public EntityInjector getEntityInjector() {
-        return entityInjector;
-    }
 }

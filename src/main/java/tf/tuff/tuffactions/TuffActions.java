@@ -10,6 +10,7 @@ import org.bukkit.event.entity.EntityToggleGlideEvent;
 import org.bukkit.event.entity.EntityToggleSwimEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.jetbrains.annotations.NotNull;
 import tf.tuff.TuffX;
 import tf.tuff.tuffactions.creative.CreativeMenu;
 import tf.tuff.tuffactions.restrictions.Restrictions;
@@ -81,8 +82,8 @@ public class TuffActions {
         return true;
     }
 
-    public void handlePacket(Player player, byte[] message) {
-        if (player == null || message == null || message.length < 13) {
+    public void handlePacket(@NotNull Player player, byte @NotNull [] message) {
+        if (message.length < 13) {
             return;
         }
         try (DataInputStream in = new DataInputStream(new ByteArrayInputStream(message))) {
@@ -161,9 +162,8 @@ public class TuffActions {
         sendPluginMessage(player, CHANNEL, payload);
     }
 
-    public void sendPluginMessage(Player player, String channel, byte[] payload) {
-        if (player == null || payload == null ||
-            !player.isOnline() || !PacketEvents.getAPI().isInitialized()
+    public void sendPluginMessage(@NotNull Player player, String channel, byte@NotNull[] payload) {
+        if (!player.isOnline() || !PacketEvents.getAPI().isInitialized()
         ) {
             return;
         }
@@ -190,7 +190,7 @@ public class TuffActions {
     }
 
     public void log(Level level, String msg, Throwable e) {
-        plugin.getLogger().log(level, "[TuffActions] ".formatted(msg), e);
+        plugin.getLogger().log(level, "[TuffActions] %s".formatted(msg), e);
     }
 
     public void log(Level level, String msg) {

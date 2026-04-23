@@ -3,7 +3,6 @@ package tf.tuff.listeners;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.*;
 import org.bukkit.event.entity.EntityToggleGlideEvent;
 import org.bukkit.event.entity.EntityToggleSwimEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -20,20 +19,20 @@ public class PlayerListener extends ListenerBase implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerChangeWorld(PlayerChangedWorldEvent e) {
-        y0Plugin.handlePlayerChangeWorld(e);
+        y0Service.handlePlayerChangeWorld(e);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerJoin(PlayerJoinEvent e) {
-        y0Plugin.handlePlayerJoin(e);
+        y0Service.handlePlayerJoin(e);
     }
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent e) {
-        y0Plugin.handlePlayerQuit(e);
+        y0Service.handlePlayerQuit(e);
         tuffActions.handlePlayerQuit(e);
-        viaBlocksPlugin.blockListener.handlePlayerQuit(e);
-        viaEntitiesPlugin.handlePlayerQuit(e);
+        viaBlocksService.blockListener.handlePlayerQuit(e);
+        viaEntitiesService.handlePlayerQuit(e);
     }
 
     @EventHandler
@@ -43,8 +42,8 @@ public class PlayerListener extends ListenerBase implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onChunkLoad(ChunkLoadEvent e) {
-        y0Plugin.handleChunkLoad(e);
-        viaBlocksPlugin.blockListener.handleChunkLoad(e);
+        y0Service.handleChunkLoad(e);
+        viaBlocksService.blockListener.handleChunkLoad(e);
     }
 
     @EventHandler

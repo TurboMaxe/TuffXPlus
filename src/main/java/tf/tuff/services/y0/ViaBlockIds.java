@@ -1,15 +1,4 @@
-package tf.tuff.y0;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-
-import org.bukkit.Bukkit;
-import org.bukkit.block.Block;
-import org.bukkit.block.data.BlockData;
+package tf.tuff.services.y0;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.viaversion.viabackwards.api.BackwardsProtocol;
@@ -18,20 +7,29 @@ import com.viaversion.viaversion.api.Via;
 import com.viaversion.viaversion.api.protocol.Protocol;
 import com.viaversion.viaversion.api.protocol.ProtocolPathEntry;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
-
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.bukkit.Bukkit;
+import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
 import tf.tuff.TuffX;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
 
 public class ViaBlockIds {
     private final TuffX p;
-    private final Y0Plugin plugin;
+    private final Y0Service plugin;
     private final String serverVersion;
     private final File mappingsFile;
     private Object2ObjectOpenHashMap<String, int[]> legacyMappings = new Object2ObjectOpenHashMap<>();
 
     public ViaBlockIds(TuffX pl) {
         p = pl;
-        plugin = pl.getY0Plugin();
+        plugin = pl.getY0Service();
         serverVersion = getServerMCVersion();
         mappingsFile = new File(pl.getDataFolder(), serverVersion + "-mappings.json");
 
@@ -205,22 +203,13 @@ public class ViaBlockIds {
 
                 if (ll != null && ll.size() == 2) {
                     String blockName = fullKey.contains("[") ? fullKey.substring(0, fullKey.indexOf("[")) : fullKey;
-                    int[] finalId;
+                    int[] finalId = switch (blockName) {
+                        case "chest" -> new int[]{54, 0};
+                        case "ender_chest" -> new int[]{130, 0};
+                        case "trapped_chest" -> new int[]{146, 0};
+                        default -> new int[]{ll.get(0), ll.get(1)};
+                    };
 
-                    switch (blockName) {
-                        case "chest":
-                            finalId = new int[]{54, 0};
-                            break;
-                        case "ender_chest":
-                            finalId = new int[]{130, 0};
-                            break;
-                        case "trapped_chest":
-                            finalId = new int[]{146, 0};
-                            break;
-                        default:
-                            finalId = new int[]{ll.get(0), ll.get(1)};
-                            break;
-                    }
                     legacyMappings.put(fullKey, finalId);
                 }
             }
