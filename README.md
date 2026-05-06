@@ -3,13 +3,15 @@
 > [!WARNING]
 > This is not a "crack" for Minecraft, it simply allows for better TuffClient integration on servers.
 
+`dev-1` contains the latest version 
+
 ![preview](./img/showcase.png)
 
 TuffX+ is a single, unified plugin that combines:
 - TuffX (Below Y0 support for modern world depth)
 - ViaBlocks (custom block palette + chunk updates for modern blocks)
 - ViaEntities (modern entity sync without nametags)
-- TuffActions (swimming sync + creative item handling)
+- TuffActions (~~swimming sync~~ + creative item handling)
 
 ## Requirements
 - Java 17
