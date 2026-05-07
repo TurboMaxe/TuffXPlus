@@ -38,8 +38,7 @@ public class RestrictionsCommand {
 			if (!sender.hasPermission("tuffx.restrictions.command.disallow")) return noPermission(sender);
 			if (args.length < 2) return invalidUsage(sender, "Module name required.");
 			try {
-				@SuppressWarnings("unchecked")
-				List<String> config = (List<String>)tuffx.getConfig().getList("restrictions.disallow");
+				List<String> config = tuffx.getConfig().getStringList("restrictions.disallow");
 				config.add(args[1]);
 				tuffx.getConfig().set("restrictions.disallow", config);
 				tuffx.saveConfig();
@@ -56,9 +55,9 @@ public class RestrictionsCommand {
 			List<String> config = null;
 			try {
 
-				config = (List<String>) tuffx.getConfig().getList("restrictions.disallow");
-				if (config != null && !config.contains(args[1])) return error(sender, "Module '%s' not in disallow list. No change.".formatted(args[1]));
-			    if (config != null) config.remove(args[1]);
+				config = tuffx.getConfig().getStringList("restrictions.disallow");
+				if (!config.contains(args[1])) return error(sender, "Module '%s' not in disallow list. No change.".formatted(args[1]));
+                config.remove(args[1]);
 				tuffx.getConfig().set("restrictions.disallow", config);
 				tuffx.saveConfig();
 				restrictions.loadConfig();

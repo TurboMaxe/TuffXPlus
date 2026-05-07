@@ -100,7 +100,7 @@ public class ViaBlockIds {
             return p.getResource("mapping-" + serverVersion + ".json");
         }
 
-        plugin.info("Searching for mappings, starting from " + serverVersion + " and going down.");
+        plugin.info("Searching for mappings, starting from %s and going down.".formatted(serverVersion));
 
         for (int m = min; m >= 16; m--) {
             int sp = (m == min) ? pat : 9;
@@ -136,7 +136,7 @@ public class ViaBlockIds {
     private void generateMappings(File f) {
         try (InputStream is = fmf()) {
             if (is == null) {
-                plugin.severe("Failed to find mapping-" + serverVersion + ".json in plugin resources!");
+                plugin.severe("Failed to find mapping-%s.json in plugin resources!".formatted(serverVersion));
                 return;
             }
 
@@ -173,7 +173,9 @@ public class ViaBlockIds {
             Map<String, Object> o = new Object2ObjectOpenHashMap<>();
             o.put("blockstates", legacyMappings);
 
-            f.getParentFile().mkdirs();
+            if (f.getParentFile().mkdirs()) {
+                plugin.info("Successfully made parent directories.");
+            } else { plugin.info("An error occured."); }
             m.writerWithDefaultPrettyPrinter().writeValue(f, o);
             plugin.info("Successfully wrote mappings to " + f.getName());
 

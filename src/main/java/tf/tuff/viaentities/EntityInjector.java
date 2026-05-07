@@ -1,9 +1,12 @@
 package tf.tuff.viaentities;
 
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
 import io.netty.channel.ChannelHandler;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import tf.tuff.netty.BaseInjector;
+import tf.tuff.networking.Channels;
 
 public class EntityInjector extends BaseInjector {
 
@@ -21,7 +24,7 @@ public class EntityInjector extends BaseInjector {
 
 	@Override
 	protected void onPostInject(Player player) {
-		plugin.plugin.getServer().getScheduler().runTask(plugin.plugin, () -> {
+		plugin.getPlugin().getServer().getScheduler().runTask(plugin.getPlugin(), () -> {
 			sendExistingEntities(player);
 		});
 	}
@@ -30,11 +33,10 @@ public class EntityInjector extends BaseInjector {
 		int viewDistance = player.getWorld().getViewDistance() * 16;
 
 		for (Entity entity : player.getWorld().getEntities()) {
-			if (entity.equals(player)) continue;
+			// if the next conditional statement skips the player objects, why need this?
+			// if (entity.equals(player)) continue;
 			if (entity instanceof Player) continue;
-
-			double distance = entity.getLocation().distance(player.getLocation());
-			if (distance > viewDistance) continue;
+			if (entity.getLocation().distance(player.getLocation()) > viewDistance) continue;
 
 			String entityType = entity.getType().getKey().toString();
 			if (plugin.entityMappingManager.isModernEntity(entityType)) {
@@ -49,7 +51,7 @@ public class EntityInjector extends BaseInjector {
 		int paletteIndex = plugin.entityMappingManager.getEntityIndex(entityType);
 		if (paletteIndex == -1) return;
 
-		com.google.common.io.ByteArrayDataOutput out = com.google.common.io.ByteStreams.newDataOutput();
+		ByteArrayDataOutput out = ByteStreams.newDataOutput();
 		out.writeUTF("SPAWN_ENTITY");
 		out.writeInt(entityId);
 		out.writeShort(paletteIndex);
@@ -59,6 +61,6 @@ public class EntityInjector extends BaseInjector {
 		out.writeFloat(entity.getLocation().getYaw());
 		out.writeFloat(entity.getLocation().getPitch());
 
-		player.sendPluginMessage(plugin.plugin, ViaEntitiesService.CLIENTBOUND_CHANNEL, out.toByteArray());
+		player.sendPluginMessage(plugin.getPlugin(), Channels.CLIENTBOUND_CHANNEL.getName(), out.toByteArray());
 	}
 }

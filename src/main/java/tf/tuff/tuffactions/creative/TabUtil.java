@@ -47,7 +47,6 @@ public class TabUtil {
 
     @Nullable
     public String getCreativeCategory(@NotNull String material) {
-        if (creativeTabMap.isEmpty()) return null;
         return creativeTabMap.get(material);
     }
 }

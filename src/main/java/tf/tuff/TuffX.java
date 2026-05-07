@@ -4,6 +4,8 @@ import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import lombok.Getter;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -99,9 +101,9 @@ public final class TuffX extends JavaPlugin implements PluginMessageListener {
     private void setupRegistry() {
         if (getConfig().getBoolean("registry.enabled", false)) {
             String url = getConfig().getString("registry.server-url");
-            String ws = getConfig().getString("registry.server");
+            String ws = getConfig().getString("registry.server", "");
 
-            if (ws != null && !ws.isEmpty() && !ws.equals("wss://urserverip.net")) {
+            if (!ws.isEmpty() && !ws.equals("wss://urserverip.net")) {
                 serverRegistry = new ServerRegistry(this, url, ws);
                 serverRegistry.connect();
             }
@@ -110,9 +112,7 @@ public final class TuffX extends JavaPlugin implements PluginMessageListener {
 
     @Override
     public void onDisable() {
-        y0Service.onTuffXDisable();
-        viaBlocksService.onTuffXDisable();
-        viaEntitiesService.onTuffXDisable();
+        services.forEach(ServiceBase::onTuffXDisable);
 
         if (serverRegistry != null) {
             serverRegistry.disconnect();
@@ -146,36 +146,38 @@ public final class TuffX extends JavaPlugin implements PluginMessageListener {
         }
 
         setupRegistry();
-        viaBlocksService.onTuffXReload();
-        y0Service.onTuffXReload();
-        tuffActions.onTuffXReload();
-        viaEntitiesService.onTuffXReload();
+        services.forEach(ServiceBase::onTuffXReload);
         getLogger().info("TuffX reloaded.");
     }
 
     public boolean TuffXCommand(CommandSender sender, Command command, String label, String[] args){
-        if (args.length > 0) {
-            if (args[0].equalsIgnoreCase("reload")) {
-                if (!(sender instanceof Player player)) {
-                    reloadTuffX();
-                } else {
-                    if (!player.hasPermission("tuffx.reload")) {
-                        player.sendMessage("§cYou do not have permission to use this command.");
-                        return false;
-                    }
-                    reloadTuffX();
-                    player.sendMessage("TuffX reloaded.");
-                }
-            }
+        if (!sender.hasPermission("tuffx.reload")) {
+            sender.sendMessage(Component.text("You do not have permission to use this command!", NamedTextColor.RED));
+            return false;
         }
-        return true;
+
+        if (args.length > 0 && args[0].equalsIgnoreCase("reload")) {
+            reloadTuffX();
+            sender.sendMessage(Component.text("TuffX reloaded."));
+            return true;
+        }
+
+        return false;
     }
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, Command command, @NotNull String label, String @NotNull [] args) {
-        if (command.getName().equalsIgnoreCase("tuffx")) return TuffXCommand(sender, command, label, args);
-        if (command.getName().equalsIgnoreCase("viablocks")) return viaBlocksService.onTuffXCommand(sender, command, label, args);
-        if (command.getName().equalsIgnoreCase("restrictions")) return tuffActions.onTuffXCommand(sender, command, label, args);
+        switch (command.getName().toLowerCase()) {
+            case "tuffx" -> {
+                return this.TuffXCommand(sender, command, label, args);
+            }
+            case "viablocks" -> {
+                return viaBlocksService.onTuffXCommand(sender, command, label, args);
+            }
+            case "restrictions" -> {
+                return tuffActions.onTuffXCommand(sender, command, label, args);
+            }
+        }
         return true;
     }
 }

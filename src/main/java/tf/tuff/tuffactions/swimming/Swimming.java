@@ -1,5 +1,12 @@
 package tf.tuff.tuffactions.swimming;
 
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.bukkit.event.entity.EntityToggleGlideEvent;
+import org.bukkit.event.entity.EntityToggleSwimEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import tf.tuff.tuffactions.TuffActions;
+
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -7,14 +14,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
-
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-import org.bukkit.event.entity.EntityToggleGlideEvent;
-import org.bukkit.event.entity.EntityToggleSwimEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-
-import tf.tuff.tuffactions.TuffActions;
 
 public class Swimming {
 
@@ -46,8 +45,9 @@ public class Swimming {
     }
 
     public void handleToggleSwim(EntityToggleSwimEvent event) {
-        if (!(event.getEntity() instanceof Player player)) return;
-        if (!event.isSwimming() && swimmingPlayers.contains(player.getUniqueId())) {
+        if (event.getEntity() instanceof Player player &&
+            !event.isSwimming() && swimmingPlayers.contains(player.getUniqueId())
+        ) {
             event.setCancelled(true);
         }
     }

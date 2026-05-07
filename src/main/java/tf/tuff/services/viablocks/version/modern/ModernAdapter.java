@@ -1,12 +1,14 @@
 package tf.tuff.services.viablocks.version.modern;
 
-import tf.tuff.services.viablocks.version.VersionAdapter;
 import org.bukkit.Material;
-import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import tf.tuff.services.viablocks.version.VersionAdapter;
+
 import java.lang.reflect.Method;
 import java.util.EnumSet;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 public class ModernAdapter extends VersionAdapter {
 
@@ -612,18 +614,10 @@ public class ModernAdapter extends VersionAdapter {
     @Override
     public EnumSet<Material> getModernMaterials() {
         EnumSet<Material> materials = EnumSet.noneOf(Material.class);
-        for (String name : MODERN_MATERIAL_NAMES) {
-            Material material = Material.matchMaterial(name);
-            if (material != null) {
-                materials.add(material);
-            }
-        }
+        Stream.of(MODERN_MATERIAL_NAMES).map(Material::matchMaterial)
+            .filter(Objects::nonNull)
+            .forEach(materials::add);
         return materials;
-    }
-
-    @Override
-    public String getBlockDataString(Block block) {
-        return block.getBlockData().getAsString();
     }
 
     @Override
@@ -643,8 +637,7 @@ public class ModernAdapter extends VersionAdapter {
         }
         if (clientViewDistanceMethod != null) {
             try {
-                Object value = clientViewDistanceMethod.invoke(player);
-                if (value instanceof Integer integer) {
+                if (clientViewDistanceMethod.invoke(player) instanceof Integer integer) {
                     return integer;
                 }
             } catch (Exception e) {

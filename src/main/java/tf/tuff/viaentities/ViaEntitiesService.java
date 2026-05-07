@@ -1,8 +1,10 @@
 package tf.tuff.viaentities;
 
 import lombok.Getter;
-import tf.tuff.TuffX;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerQuitEvent;
+import tf.tuff.TuffX;
+import tf.tuff.networking.Channels;
 import tf.tuff.services.ServiceBase;
 
 import java.util.HashSet;
@@ -11,24 +13,16 @@ import java.util.UUID;
 import java.util.logging.Level;
 
 public final class ViaEntitiesService implements ServiceBase {
-
-    public static final String CLIENTBOUND_CHANNEL = "viaentities:data";
-    public static final String SERVERBOUND_CHANNEL = "entities:handshake";
-
     public final Set<UUID> viaEntitiesEnabledPlayers = new HashSet<>();
 
     static ViaEntitiesService instance;
 
     public EntityMappingManager entityMappingManager;
     private EntityInjector entityInjector;
-    @Getter
-    private boolean enabled = true;
-    @Getter
-    private boolean debug = false;
-    @Getter
-    private int maxDistance = -1;
-
-    public TuffX plugin;
+    @Getter private boolean enabled = true;
+    @Getter private boolean debug = false;
+    @Getter private int maxDistance = -1;
+    @Getter private TuffX plugin;
 
     public ViaEntitiesService(TuffX plugin) {
         this.plugin = plugin;
@@ -63,8 +57,8 @@ public final class ViaEntitiesService implements ServiceBase {
         this.entityMappingManager = new EntityMappingManager();
         this.entityInjector = new EntityInjector(this);
 
-        plugin.getServer().getMessenger().registerOutgoingPluginChannel(plugin, CLIENTBOUND_CHANNEL);
-        plugin.getServer().getMessenger().registerIncomingPluginChannel(plugin, SERVERBOUND_CHANNEL, plugin);
+        plugin.getServer().getMessenger().registerOutgoingPluginChannel(plugin, Channels.CLIENTBOUND_CHANNEL.getName());
+        plugin.getServer().getMessenger().registerIncomingPluginChannel(plugin, Channels.SERVERBOUND_CHANNEL.getName(), plugin);
 
         if (enabled) {
             info("ViaEntities enabled with " + entityMappingManager.getModernEntityCount() + " modern entities");
@@ -90,22 +84,19 @@ public final class ViaEntitiesService implements ServiceBase {
 
         java.util.List<String> palette = entityMappingManager.getAllModernEntities();
         out.writeInt(palette.size());
+        palette.forEach(out::writeUTF);
 
-        for (String entityType : palette) {
-            out.writeUTF(entityType);
-        }
-
-        player.sendPluginMessage(plugin, CLIENTBOUND_CHANNEL, out.toByteArray());
+        player.sendPluginMessage(plugin, Channels.CLIENTBOUND_CHANNEL.getName(), out.toByteArray());
     }
 
-    public void handlePlayerQuit(org.bukkit.event.player.PlayerQuitEvent event) {
+    public void handlePlayerQuit(PlayerQuitEvent event) {
         entityInjector.eject(event.getPlayer());
         viaEntitiesEnabledPlayers.remove(event.getPlayer().getUniqueId());
     }
 
     public void onTuffXDisable() {
-        plugin.getServer().getMessenger().unregisterOutgoingPluginChannel(plugin, CLIENTBOUND_CHANNEL);
-        plugin.getServer().getMessenger().unregisterIncomingPluginChannel(plugin, SERVERBOUND_CHANNEL);
+        plugin.getServer().getMessenger().unregisterOutgoingPluginChannel(plugin, Channels.CLIENTBOUND_CHANNEL.getName());
+        plugin.getServer().getMessenger().unregisterIncomingPluginChannel(plugin, Channels.SERVERBOUND_CHANNEL.getName());
     }
 
     public boolean isPlayerEnabled(UUID playerId) {

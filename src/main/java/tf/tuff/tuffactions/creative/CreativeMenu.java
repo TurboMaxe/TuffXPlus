@@ -79,7 +79,7 @@ public class CreativeMenu {
             InventoryAction action = event.getAction();
             if (action == InventoryAction.PLACE_ALL || action == InventoryAction.PLACE_ONE || action == InventoryAction.SWAP_WITH_CURSOR) {
 
-                Bukkit.getScheduler().runTaskLater(this.plugin.getPlugin(), () -> {
+                Bukkit.getScheduler().runTaskLater(this.plugin.plugin, () -> {
                     ItemStack realItemStack = playerHoldingPlaceholder.get(playerUUID);
                     
                     if (realItemStack != null && event.getClickedInventory() != null) {

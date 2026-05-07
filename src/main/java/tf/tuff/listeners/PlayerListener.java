@@ -4,7 +4,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityToggleGlideEvent;
-import org.bukkit.event.entity.EntityToggleSwimEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -45,11 +44,11 @@ public class PlayerListener extends ListenerBase implements Listener {
         y0Service.handleChunkLoad(e);
         viaBlocksService.blockListener.handleChunkLoad(e);
     }
-
-    @EventHandler
-    public void onToggleSwim(EntityToggleSwimEvent e) {
-        tuffActions.handleToggleSwim(e);
-    }
+   // swimming is deprecated in paper
+   // @EventHandler
+   // public void onToggleSwim(EntityToggleSwimEvent e) {
+   //     tuffActions.handleToggleSwim(e);
+   // }
 
     @EventHandler
     public void onToggleGlide(EntityToggleGlideEvent e) {

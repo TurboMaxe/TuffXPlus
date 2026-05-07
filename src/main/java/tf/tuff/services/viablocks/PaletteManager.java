@@ -5,6 +5,7 @@ import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import tf.tuff.networking.Channels;
 import tf.tuff.services.viablocks.version.VersionAdapter;
 
 import java.util.ArrayList;
@@ -118,7 +119,7 @@ public class PaletteManager {
                 .stream()
                 .filter(player -> plugin.isPlayerEnabled(player))
                 .forEach(player ->
-                        player.sendPluginMessage(plugin.plugin, ViaBlocksService.CLIENTBOUND_CHANNEL, out.toByteArray())
+                        player.sendPluginMessage(plugin.plugin, Channels.CLIENTBOUND_CHANNEL.getName(), out.toByteArray())
                 );
         });
     }

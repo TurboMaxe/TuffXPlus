@@ -12,6 +12,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.jetbrains.annotations.NotNull;
 import tf.tuff.TuffX;
+import tf.tuff.services.ServiceBase;
 import tf.tuff.tuffactions.creative.CreativeMenu;
 import tf.tuff.tuffactions.restrictions.Restrictions;
 import tf.tuff.tuffactions.swimming.Swimming;
@@ -25,7 +26,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
-public class TuffActions {
+public class TuffActions implements ServiceBase {
 
     public static final String CHANNEL = "eagler:tuffactions";
 
@@ -57,6 +58,16 @@ public class TuffActions {
         if (swimmingEnabled) info("Swimming enabled.");
         if (creativeEnabled) info("Creative items enabled.");
         if (restrictionsEnabled) info("Restrictions enabled.");
+    }
+
+    @Override
+    public void onTuffXEnable() {
+        load();
+    }
+
+    @Override
+    public void onTuffXDisable() {
+
     }
 
     public void onTuffXReload() {

@@ -1,9 +1,11 @@
 package tf.tuff.netty;
 
 import com.viaversion.viaversion.api.Via;
+import com.viaversion.viaversion.api.connection.UserConnection;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import org.bukkit.entity.Player;
+import tf.tuff.TuffX;
 import tf.tuff.services.viablocks.CustomBlockListener;
 import tf.tuff.services.y0.Y0Service;
 
@@ -26,9 +28,12 @@ public class ChunkInjector extends BaseInjector {
 	}
 
 	@Override
+	protected void onPostInject(Player player) {}
+
+	@Override
 	public void inject(Player player) {
 		UUID uuid = player.getUniqueId();
-		var viaConnection = Via.getAPI().getConnection(uuid);
+		UserConnection viaConnection = Via.getAPI().getConnection(uuid);
 		if (viaConnection == null) return;
 
 		Channel channel = viaConnection.getChannel();
@@ -57,7 +62,7 @@ public class ChunkInjector extends BaseInjector {
 						new ChunkHandler(viaBlocks, y0, player));
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
+				TuffX.getInstance().getLogger().info(e.getMessage());
 			}
 		});
 	}

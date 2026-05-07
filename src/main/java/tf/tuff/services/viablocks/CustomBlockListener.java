@@ -28,6 +28,7 @@ import org.bukkit.event.block.BlockSpreadEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.jetbrains.annotations.NotNull;
+import tf.tuff.networking.Channels;
 import tf.tuff.services.viablocks.version.VersionAdapter;
 
 import javax.annotation.Nonnull;
@@ -89,16 +90,12 @@ public class CustomBlockListener {
             .build();
     }
 
-    public byte[] getCachedChunkData(String worldName, int x, int z) {
-        return chunkPacketCache.getIfPresent(chunkKey(worldName, x, z));
-    }
-
     private @Nonnull String chunkKey(String worldName, int x, int z) {
         return worldName + "_" + x + "_" + z;
     }
 
     public void onViaBlocksPlayerJoin(Player player) {
-        if (plugin.isFirstJoin(player)) {
+        if (!plugin.hasPlayerJoinedBefore(player)) {
             plugin.sendWelcomeGui(player);
             plugin.markPlayerAsJoined(player);
         }
@@ -162,7 +159,7 @@ public class CustomBlockListener {
             int[] chunk = chunks.get(i);
             byte[] data = getExtraDataForChunk(worldName, chunk[0], chunk[1]);
             if (data != null && data.length > 0) {
-                player.sendPluginMessage(plugin.plugin, ViaBlocksService.CLIENTBOUND_CHANNEL, data);
+                player.sendPluginMessage(plugin.plugin, Channels.CLIENTBOUND_CHANNEL.getName(), data);
             }
         }
 
@@ -276,9 +273,8 @@ public class CustomBlockListener {
                     if (blockType == Material.AIR || !this.modernMaterials.contains(blockType)) {
                         continue;
                     }
-                    
-                    @SuppressWarnings("null")
-                    @Nonnull BlockData data = chunkSnapshot.getBlockData(x, y, z);
+
+                    BlockData data = chunkSnapshot.getBlockData(x, y, z);
                     
                     Integer cachedId = blockDataIdCache.getIfPresent(data);
                     int materialId;
@@ -302,7 +298,6 @@ public class CustomBlockListener {
 
     public byte[] getExtraDataForMultiBlock(World world, List<Long> locations) {
         Map<Integer, List<Long>> foundBlocks = new HashMap<>();
-        
         for (long packedLoc : locations) {
             Integer cachedId = recentModernChanges.getIfPresent(packedLoc);
             if (cachedId != null) {
@@ -476,14 +471,11 @@ public class CustomBlockListener {
         invalidateChunkCache(location.getChunk());
     }
 
-    public Integer getRecentChange(long packed) {
-        return recentModernChanges.getIfPresent(packed);
-    }
-
-    private void sendBlockStateUpdateToNearbyPlayers(Location location, BlockData data) {
-        if (!plugin.isEnabled() || data == null || location.getWorld() == null) return;
+    private void sendBlockStateUpdateToNearbyPlayers(Location location, @NotNull BlockData data) {
+        if (!plugin.isEnabled() || location.getWorld() == null) return;
         Integer cachedId = blockDataIdCache.getIfPresent(data);
         int stateId;
+
         if (cachedId != null) {
             stateId = cachedId;
         } else {
@@ -492,8 +484,7 @@ public class CustomBlockListener {
         }
         if (stateId == -1) return;
 
-        World world = location.getWorld();
-        world.getPlayers().stream()
+        location.getWorld().getPlayers().stream()
             .filter(plugin::isPlayerEnabled)
             .filter(p -> p.getLocation().distanceSquared(location) < UPDATE_RADIUS_SQUARED)
             .forEach(p -> sendPacket(p, stateId, location));
@@ -501,13 +492,11 @@ public class CustomBlockListener {
 
     private void sendClearUpdateToNearbyPlayers(Location location) {
         if (!plugin.isEnabled() || plugin.viaBlocksEnabledPlayers.isEmpty() || location.getWorld() == null) return;
-        final int AIR_ID = 0;
-        World world = location.getWorld();
 
-        world.getPlayers().stream()
+        location.getWorld().getPlayers().stream()
                 .filter(plugin::isPlayerEnabled)
                 .filter(p -> p.getLocation().distanceSquared(location) < UPDATE_RADIUS_SQUARED)
-                .forEach(p -> sendPacket(p, AIR_ID, location));
+                .forEach(p -> sendPacket(p, 0, location));
     }
 
     private void invalidateChunkCache(@NotNull Chunk chunk) {
@@ -534,7 +523,7 @@ public class CustomBlockListener {
         if (player == null || !player.isOnline()) return;
 
         byte[] packetData = buildChunkPacket(updateData);
-        player.sendPluginMessage(plugin.plugin, ViaBlocksService.CLIENTBOUND_CHANNEL, packetData);
+        player.sendPluginMessage(plugin.plugin, Channels.CLIENTBOUND_CHANNEL.getName(), packetData);
     }
 
     private int getMaterialId(BlockData data) {
@@ -564,7 +553,7 @@ public class CustomBlockListener {
         List<String> palette = this.paletteManager.getPalette();
         out.writeInt(palette.size());
         palette.forEach(out::writeUTF);
-        player.sendPluginMessage(plugin.plugin, ViaBlocksService.CLIENTBOUND_CHANNEL, out.toByteArray());
+        player.sendPluginMessage(plugin.plugin, Channels.CLIENTBOUND_CHANNEL.getName(), out.toByteArray());
     }
     
     public boolean isModernMaterial(Material material) {
@@ -577,7 +566,7 @@ public class CustomBlockListener {
         prepareChunkCache(chunk);
         byte[] data = getExtraDataForChunk(chunk.getWorld().getName(), chunk.getX(), chunk.getZ());
         if (data != null && data.length > 0) {
-            player.sendPluginMessage(plugin.plugin, ViaBlocksService.CLIENTBOUND_CHANNEL, data);
+            player.sendPluginMessage(plugin.plugin, Channels.CLIENTBOUND_CHANNEL.getName(), data);
         }
     }
 
@@ -594,8 +583,8 @@ public class CustomBlockListener {
             try {
                 Method method = world.getClass().getMethod("getMinHeight");
                 Object value = method.invoke(world);
-                if (value instanceof Integer) {
-                    return (Integer) value;
+                if (value instanceof Integer integer) {
+                    return integer;
                 }
             } catch (Exception ignored) {}
             return 0;

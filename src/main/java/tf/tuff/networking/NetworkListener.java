@@ -4,16 +4,13 @@ import com.github.retrooper.packetevents.event.PacketListener;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerChunkData;
+import lombok.AllArgsConstructor;
 import org.bukkit.entity.Player;
 import tf.tuff.TuffX;
 
+@AllArgsConstructor
 public class NetworkListener implements PacketListener {
-
     private final TuffX plugin;
-
-    public NetworkListener(TuffX plugin) {
-        this.plugin = plugin;
-    }
 
     @Override
     public void onPacketSend(PacketSendEvent event) {

@@ -5,6 +5,7 @@ import com.viaversion.viaversion.api.connection.UserConnection;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import org.bukkit.entity.Player;
+import tf.tuff.TuffX;
 
 import java.util.UUID;
 
@@ -18,8 +19,7 @@ public abstract class BaseInjector {
 
 	protected abstract ChannelHandler createHandler(Player player);
 
-	protected void onPostInject(Player player) {
-	}
+	protected abstract void onPostInject(Player player);
 
 	public void inject(Player player) {
 		UUID uuid = player.getUniqueId();
@@ -54,7 +54,9 @@ public abstract class BaseInjector {
 
 				onPostInject(player);
 			} catch (Exception e) {
-				e.printStackTrace();
+				TuffX.getInstance().getLogger().info(
+						"Exception occured while injecting a channel. %s".formatted(e.getMessage())
+				);
 			}
 		});
 	}

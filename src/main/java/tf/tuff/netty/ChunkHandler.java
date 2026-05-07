@@ -119,12 +119,8 @@ public class ChunkHandler extends ChannelOutboundHandlerAdapter {
         q.y0Data = y0Data;
         queue.put(key, q);
 
-        if (!viaReady) {
-            requestViaCache(chunkX, chunkZ, key);
-        }
-        if (!y0Ready) {
-            requestY0Cache(chunkX, chunkZ, key);
-        }
+        if (!viaReady) requestViaCache(chunkX, chunkZ, key);
+        if (!y0Ready) requestY0Cache(chunkX, chunkZ, key);
 
         scheduleTimeout(key);
     }
@@ -226,7 +222,7 @@ public class ChunkHandler extends ChannelOutboundHandlerAdapter {
             ctx.channel().eventLoop().execute(() -> {
                 try {
                     writeWithData(ctx, q.buf, q.promise, q.viaData, q.y0Data);
-                } catch (Exception e) {
+                } catch (Exception ignored) {
                 } finally {
                     if (q.buf.refCnt() > 0) {
                         q.buf.release();

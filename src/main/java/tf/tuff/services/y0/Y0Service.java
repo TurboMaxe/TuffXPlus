@@ -24,6 +24,8 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import tf.tuff.TuffX;
 import tf.tuff.services.ServiceBase;
 
@@ -38,6 +40,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -56,13 +59,13 @@ public class Y0Service implements ServiceBase {
     private volatile Cache<WCK, ObjectArrayList<byte[]>> cc;
     private volatile Cache<WCK, byte[]> ccCombined;
     private boolean d;
-    private volatile ExecutorService cp;
+    private ExecutorService cp;
 
     private final ThreadLocal<Object2ObjectOpenHashMap<BlockData, int[]>> tlcc = ThreadLocal.withInitial(() -> new Object2ObjectOpenHashMap<>(256));
     private final ThreadLocal<ByteArrayOutputStream> tlos = ThreadLocal.withInitial(() -> new ByteArrayOutputStream(8256));
     private final ThreadLocal<byte[]> tlbd = ThreadLocal.withInitial(() -> new byte[12288]);
 
-    private TuffX plugin;
+    private final TuffX plugin;
 
     private static final int[] EMPTY_LEGACY = {1, 0};
 
@@ -412,14 +415,20 @@ public class Y0Service implements ServiceBase {
             plugin.getServer().getScheduler().runTaskLater(plugin, () ->
                     sendY0ChunksBatched(p, worldName, chunks, nextStart), 1);
         }
+
     }
 
+    @Nullable
     private byte[] cby0sp(boolean s) {
-        try (ByteArrayOutputStream b = new ByteArrayOutputStream(); DataOutputStream o = new DataOutputStream(b)) {
+        try (ByteArrayOutputStream b = new ByteArrayOutputStream();
+             DataOutputStream o = new DataOutputStream(b)
+        ) {
             o.writeUTF("y0_status");
             o.writeBoolean(s);
             return b.toByteArray();
-        } catch (IOException e) { return null; }
+        } catch (IOException ignored) {
+            return null;
+        }
     }
 
     private byte[] cdp() {
@@ -431,7 +440,7 @@ public class Y0Service implements ServiceBase {
 
     public void handlePlayerChangeWorld(PlayerChangedWorldEvent e) {
         Player p = e.getPlayer();
-        p.sendPluginMessage(plugin, CH, cdp());
+        p.sendPluginMessage(plugin, CH, Objects.requireNonNull(cdp()));
         boolean isEnabledWorld = ew.contains(p.getWorld().getName());
         p.sendPluginMessage(plugin, CH, cby0sp(isEnabledWorld));
         if (isPlayerReady(p) && isEnabledWorld) {
@@ -441,27 +450,22 @@ public class Y0Service implements ServiceBase {
 
     public void handlePlayerJoin(PlayerJoinEvent e) {
         Player p = e.getPlayer();
-        p.sendPluginMessage(plugin, CH, cdp());
+        p.sendPluginMessage(plugin, CH, Objects.requireNonNull(cdp()));
         boolean isEnabledWorld = ew.contains(p.getWorld().getName());
         p.sendPluginMessage(plugin, CH, cby0sp(isEnabledWorld));
     }
 
-    public void processAndSendChunk(final Player p, final Chunk c) {
-        if (c == null || p == null || !p.isOnline()) return;
+    public void processAndSendChunk(@NotNull final Player p, @NotNull final Chunk c) {
+        if (!p.isOnline()) return;
 
         if (ew != null && !ew.contains(c.getWorld().getName())) return;
 
         final WCK k = new WCK(c.getWorld().getName(), c.getX(), c.getZ());
         ObjectArrayList<byte[]> cachedData = cc.getIfPresent(k);
         if (cachedData != null) {
-            if (p.isOnline()) {
-                for (byte[] py : cachedData) {
-                    p.sendPluginMessage(plugin, CH, py);
-                }
+                cachedData.forEach(py -> p.sendPluginMessage(plugin, CH, py));
+                return;
             }
-            return;
-        }
-
         final ChunkSnapshot snapshot = c.getChunkSnapshot(false, false, false);
         processSnapshotAsync(p, snapshot, c.getX(), c.getZ());
     }
@@ -791,7 +795,7 @@ public class Y0Service implements ServiceBase {
         });
     }
 
-    public void handleBlockFromTo(BlockFromToEvent e) {
+    public void handleBlockFromTo(@NotNull BlockFromToEvent e) {
         final Block b = e.getToBlock();
         if (b.getY() < 0) {
             plugin.getServer().getScheduler().runTask(plugin, () -> {

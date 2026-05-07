@@ -1,8 +1,18 @@
 package tf.tuff.viaentities;
 
-import java.io.*;
-import java.util.*;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.AllArgsConstructor;
+
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class EntityMappingManager {
     private final List<String> modernEntities = new ArrayList<>();
@@ -128,19 +138,12 @@ public class EntityMappingManager {
         return modernEntities.size();
     }
 
+    @AllArgsConstructor
     public static class EntityInfo {
         public final String addedVersion;
         public final String model;
         public final boolean animated;
         public final double width;
         public final double height;
-
-        public EntityInfo(String addedVersion, String model, boolean animated, double width, double height) {
-            this.addedVersion = addedVersion;
-            this.model = model;
-            this.animated = animated;
-            this.width = width;
-            this.height = height;
-        }
     }
 }

@@ -6,6 +6,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
+import tf.tuff.networking.Channels;
 
 import java.util.List;
 
@@ -92,8 +94,7 @@ public class EntityDataHandler extends ChannelOutboundHandlerAdapter {
         if (isSpawnPacket) {
             try {
                 handleSpawnPacket(msg);
-            } catch (Exception ignored) {
-            }
+            } catch (Exception ignored) {}
         } else if (className.contains("EntityMetadata") || className.contains("SetEntityData") ||
                    simpleClassName.equals("PacketPlayOutEntityMetadata") ||
                    simpleClassName.equals("ClientboundSetEntityDataPacket")) {
@@ -102,8 +103,7 @@ public class EntityDataHandler extends ChannelOutboundHandlerAdapter {
                 if (entityId != -1) {
                     sendEntityMetadata(entityId, null);
                 }
-            } catch (Exception ignored) {
-            }
+            } catch (Exception ignored) {}
         } else if (className.contains("Animation") ||
                    simpleClassName.equals("PacketPlayOutAnimation") ||
                    simpleClassName.equals("ClientboundAnimatePacket")) {
@@ -145,12 +145,12 @@ public class EntityDataHandler extends ChannelOutboundHandlerAdapter {
 
             if (typeName.contains("EntityType") || typeName.contains("EntityTypes")) {
                 entityTypeObj = value;
-            } else if (value instanceof Integer && entityId == -1) {
-                entityId = (Integer) value;
-            } else if (value instanceof Double) {
-                doubles.add((Double) value);
-            } else if (value instanceof Byte) {
-                bytes.add((Byte) value);
+            } else if (value instanceof Integer inte && entityId == -1) {
+                entityId = inte;
+            } else if (value instanceof Double d) {
+                doubles.add(d);
+            } else if (value instanceof Byte b) {
+                bytes.add(b);
             }
         }
 
@@ -207,53 +207,14 @@ public class EntityDataHandler extends ChannelOutboundHandlerAdapter {
                 java.lang.reflect.Field field = msg.getClass().getDeclaredField(name);
                 field.setAccessible(true);
                 Object value = field.get(msg);
-                if (value instanceof Integer) return (Integer) value;
-                if (value instanceof Number) return ((Number) value).intValue();
+                if (value instanceof Number val) return val.intValue();
             } catch (Exception ignored) {}
         }
         return -1;
     }
 
-    private double getDoubleField(Object msg, String... fieldNames) {
-        for (String name : fieldNames) {
-            try {
-                java.lang.reflect.Field field = msg.getClass().getDeclaredField(name);
-                field.setAccessible(true);
-                Object value = field.get(msg);
-                if (value instanceof Double) return (Double) value;
-                if (value instanceof Number) return ((Number) value).doubleValue();
-            } catch (Exception ignored) {}
-        }
-        return 0.0;
-    }
-
-    private float getAngleField(Object msg, String... fieldNames) {
-        for (String name : fieldNames) {
-            try {
-                java.lang.reflect.Field field = msg.getClass().getDeclaredField(name);
-                field.setAccessible(true);
-                Object value = field.get(msg);
-                if (value instanceof Byte) return ((Byte) value) * 360.0f / 256.0f;
-                if (value instanceof Float) return (Float) value;
-                if (value instanceof Number) return ((Number) value).floatValue();
-            } catch (Exception ignored) {}
-        }
-        return 0.0f;
-    }
-
-    private Object getField(Object msg, String... fieldNames) {
-        for (String name : fieldNames) {
-            try {
-                java.lang.reflect.Field field = msg.getClass().getDeclaredField(name);
-                field.setAccessible(true);
-                return field.get(msg);
-            } catch (Exception ignored) {}
-        }
-        return null;
-    }
-
-    private String extractEntityTypeName(String typeStr) {
-        if (typeStr == null) return null;
+    private String extractEntityTypeName(@NotNull String typeStr) {
+        if (typeStr.isEmpty()) return null;
 
         if (typeStr.startsWith("entity.minecraft.")) {
             String name = typeStr.substring("entity.minecraft.".length());
@@ -317,8 +278,7 @@ public class EntityDataHandler extends ChannelOutboundHandlerAdapter {
         out.writeFloat(yaw);
         out.writeFloat(pitch);
 
-        byte[] data = out.toByteArray();
-        player.sendPluginMessage(plugin.plugin, ViaEntitiesService.CLIENTBOUND_CHANNEL, data);
+        player.sendPluginMessage(plugin.getPlugin(), Channels.CLIENTBOUND_CHANNEL.getName(), out.toByteArray());
     }
 
     private void sendEntityMetadata(int entityId, Object packedItems) {
@@ -367,11 +327,8 @@ public class EntityDataHandler extends ChannelOutboundHandlerAdapter {
             } else {
                 out.writeInt(0);
             }
-
-            byte[] data = out.toByteArray();
-            player.sendPluginMessage(plugin.plugin, ViaEntitiesService.CLIENTBOUND_CHANNEL, data);
-        } catch (Exception ignored) {
-        }
+            player.sendPluginMessage(plugin.getPlugin(), Channels.CLIENTBOUND_CHANNEL.getName(), out.toByteArray());
+        } catch (Exception ignored) {}
     }
 
     private void sendEntityAnimation(int entityId, int animationType) {
@@ -381,9 +338,7 @@ public class EntityDataHandler extends ChannelOutboundHandlerAdapter {
         out.writeUTF("ENTITY_ANIMATION");
         out.writeInt(entityId);
         out.writeInt(animationType);
-
-        byte[] data = out.toByteArray();
-        player.sendPluginMessage(plugin.plugin, ViaEntitiesService.CLIENTBOUND_CHANNEL, data);
+        player.sendPluginMessage(plugin.getPlugin(), Channels.CLIENTBOUND_CHANNEL.getName(), out.toByteArray());
     }
 
     private void sendEntityDestroy(int entityId) {
@@ -392,8 +347,6 @@ public class EntityDataHandler extends ChannelOutboundHandlerAdapter {
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
         out.writeUTF("DESTROY_ENTITY");
         out.writeInt(entityId);
-
-        byte[] data = out.toByteArray();
-        player.sendPluginMessage(plugin.plugin, ViaEntitiesService.CLIENTBOUND_CHANNEL, data);
+        player.sendPluginMessage(plugin.getPlugin(), Channels.CLIENTBOUND_CHANNEL.getName(), out.toByteArray());
     }
 }
